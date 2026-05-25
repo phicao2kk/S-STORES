@@ -1,0 +1,2047 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <!-- Firebase App (the core Firebase SDK) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<!-- Firebase Realtime Database -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<!-- Firebase Storage (để lưu ảnh thay vì Base64) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+<script>
+  // Cấu hình Firebase của bạn
+  const firebaseConfig = {
+    apiKey: "AIzaSyDbzHvxBT1mGGIrda2b_JxinZrFTxHM3Hc",
+    authDomain: "fir-s-stores-2007.firebaseapp.com",
+    databaseURL: "https://fir-s-stores-2007-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "fir-s-stores-2007",
+    storageBucket: "fir-s-stores-2007.firebasestorage.app",
+    messagingSenderId: "325985274783",
+    appId: "1:325985274783:web:9601cc0ef9b3ee503ecbaa",
+    measurementId: "G-YH3DV15NT7"
+  };
+
+  // Khởi tạo Firebase
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  const db = firebase.database();
+  const storage = firebase.storage();
+</script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - S-STORES</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .upload-area { border: 2px dashed #cbd5e1; cursor: pointer; transition: all 0.2s; }
+        .upload-area:hover { border-color: #6366f1; background: #eef2ff; }
+        .image-preview { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
+        .toast { animation: slideIn 0.25s ease forwards; position: fixed; bottom: 20px; right: 20px; z-index: 1000; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(30px);} to { opacity: 1; transform: translateX(0);} }
+        .admin-table { width: 100%; border-collapse: collapse; }
+        .admin-table th, .admin-table td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+        .admin-table th { background-color: #f8fafc; font-weight: 600; color: #1e293b; position: sticky; top: 0; }
+        .table-container { overflow-x: auto; max-height: 500px; overflow-y: auto; }
+        .badge-success { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
+        .badge-warning { background: #fed7aa; color: #9a3412; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
+        .badge-danger { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
+        .badge-info { background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
+        .progress-bar { height: 6px; background: #e2e8f0; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #10b981; border-radius: 10px; transition: width 0.3s; }
+        .stock-zero { background: #fee2e2; border-left: 4px solid #ef4444; }
+        .notification-badge { position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border-radius: 20px; padding: 2px 6px; font-size: 10px; font-weight: bold; min-width: 18px; text-align: center; }
+        .tab-with-notif { position: relative; display: inline-flex; align-items: center; gap: 4px; }
+        .store-info-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .social-icon { transition: all 0.3s ease; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.1); transition: all 0.3s; }
+        .social-icon:hover { transform: translateY(-3px); background: rgba(255,255,255,0.2); }
+        .modal-overlay { background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); }
+        .combo-only-item { background: #fffbeb; border: 1px solid #fcd34d; }
+        .combo-only-item .remove-btn { color: #f59e0b; }
+        .flavor-badge { background: #e0e7ff; color: #4338ca; padding: 2px 8px; border-radius: 20px; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
+        .combo-flavor-select { background: #f3f4f6; border-radius: 6px; padding: 4px 8px; font-size: 12px; width: 100%; max-width: 120px; }
+    </style>
+</head>
+<body class="bg-slate-100">
+
+    <div class="max-w-7xl mx-auto px-4 py-5">
+        <div class="flex flex-wrap justify-between items-center mb-6 gap-3">
+            <div>
+                <h1 class="text-2xl font-bold text-indigo-600">S-STORES</h1>
+                <p id="storeNameDisplay" class="text-slate-500 text-sm"></p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="openStoreModal()" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm transition"><i class="fas fa-store"></i> Quản lý cửa hàng</button>
+                <button onclick="refreshAll()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition"><i class="fas fa-sync-alt"></i> Cập nhật sản phẩm</button>
+                <button onclick="copyStoreLink()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm transition"><i class="fas fa-link"></i> Sao chép link</button>
+                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
+            </div>
+        </div>
+
+        <!-- Tabs với thông báo -->
+        <div class="flex flex-wrap gap-2 mb-6 border-b pb-2">
+            <button onclick="showTab('products')" id="tabProducts" class="px-5 py-2 rounded-full font-semibold bg-indigo-600 text-white transition">📦 Sản phẩm</button>
+            <button onclick="showTab('combos')" id="tabCombos" class="px-5 py-2 rounded-full font-semibold bg-white text-slate-700 border transition">🎁 Combo</button>
+            <button onclick="showTab('inventory')" id="tabInventory" class="px-5 py-2 rounded-full font-semibold bg-white text-slate-700 border transition relative">
+                <span class="tab-with-notif">📦 Nhập hàng <span id="inventoryNotif" class="hidden notification-badge">0</span></span>
+            </button>
+            <button onclick="showTab('orders')" id="tabOrders" class="px-5 py-2 rounded-full font-semibold bg-white text-slate-700 border transition">📊 Đơn hàng</button>
+        </div>
+
+        <!-- TAB SẢN PHẨM -->
+        <div id="productsTab">
+            <div class="grid lg:grid-cols-3 gap-6">
+                <div class="bg-white rounded-2xl shadow-md p-5 h-fit" id="productFormCard">
+                    <h3 class="text-lg font-bold mb-4" id="formTitle"><i class="fas fa-plus text-indigo-500"></i> Thêm sản phẩm</h3>
+                    <div class="space-y-3">
+                        <input type="text" id="prodName" placeholder="Tên sản phẩm" class="w-full p-2 border rounded-lg">
+                        <input type="number" id="prodImport" placeholder="Giá nhập (VNĐ)" class="w-full p-2 border rounded-lg">
+                        <input type="number" id="prodPrice" placeholder="Giá bán (VNĐ)" class="w-full p-2 border rounded-lg">
+                        <div class="upload-area rounded-xl p-3 text-center" onclick="document.getElementById('imageFile').click()">
+                            <input type="file" id="imageFile" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                            <div id="uploadPlaceholder"><i class="fas fa-cloud-upload-alt text-2xl text-slate-400"></i><p class="text-sm">Click để upload ảnh</p></div>
+                            <div id="previewContainer" class="hidden mt-2"><img id="imagePreview" class="image-preview mx-auto"><button onclick="clearImage()" class="text-xs text-red-500 mt-1">Xóa</button></div>
+                        </div>
+                        <input type="text" id="prodFlavor" placeholder="Vị (VD: Cam, Dâu)" class="w-full p-2 border rounded-lg">
+                        <input type="number" id="prodStock" placeholder="Tồn kho" class="w-full p-2 border rounded-lg" value=" ">
+                        <button id="submitProductBtn" onclick="submitProduct()" class="w-full bg-indigo-600 text-white py-2 rounded-xl font-semibold">➕ Thêm sản phẩm</button>
+                        <button id="cancelEditBtn" onclick="cancelEdit()" class="w-full bg-gray-300 text-gray-700 py-2 rounded-xl font-semibold hidden">✖️ Hủy chỉnh sửa</button>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 bg-white rounded-2xl shadow-md overflow-hidden">
+                    <div class="bg-slate-100 px-5 py-3 border-b"><h3 class="font-bold"><i class="fas fa-list-ul mr-2"></i> Danh sách sản phẩm</h3></div>
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr><th style="width: 70px;">Ảnh</th><th>Tên sản phẩm</th><th>Loại</th><th style="width: 100px;">Giá nhập</th><th style="width: 100px;">Giá bán</th><th style="width: 80px;">Lời</th><th style="width: 80px;">Tồn</th><th style="width: 100px;">Đã nhập</th><th style="width: 100px;">Đã bán</th><th style="width: 100px;">Cần nhập</th><th>Vị</th><th style="width: 80px;">Thao tác</th>
+                            </thead>
+                            <tbody id="productList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB COMBO -->
+        <div id="combosTab" class="hidden">
+            <div class="grid lg:grid-cols-3 gap-6">
+                <div class="bg-white rounded-2xl shadow-md p-5 h-fit">
+                    <h3 class="text-lg font-bold mb-4"><i class="fas fa-layer-group text-amber-500"></i> Tạo combo</h3>
+                    <div class="space-y-3">
+                        <input type="text" id="comboName" placeholder="Tên combo" class="w-full p-2 border rounded-lg">
+                        <input type="number" id="comboPrice" placeholder="Giá bán combo (VNĐ)" class="w-full p-2 border rounded-lg">
+                        
+                        <!-- Upload ảnh cho combo -->
+                        <div class="upload-area rounded-xl p-3 text-center" onclick="document.getElementById('comboImageFile').click()">
+                            <input type="file" id="comboImageFile" accept="image/*" class="hidden" onchange="handleComboImageUpload(event)">
+                            <div id="comboUploadPlaceholder">
+                                <i class="fas fa-cloud-upload-alt text-2xl text-slate-400"></i>
+                                <p class="text-sm text-slate-500">Click để upload ảnh cho combo</p>
+                                <p class="text-xs text-slate-400">Hỗ trợ JPG, PNG, GIF, WebP</p>
+                            </div>
+                            <div id="comboPreviewContainer" class="hidden mt-2">
+                                <img id="comboImagePreview" class="image-preview mx-auto">
+                                <button onclick="clearComboImage()" class="text-xs text-red-500 mt-1">Xóa ảnh</button>
+                            </div>
+                        </div>
+                        
+                        
+                        <!-- Danh sách sản phẩm lẻ có sẵn -->
+                        <div class="border rounded-lg p-3 bg-slate-50">
+                            <label class="font-semibold text-sm block mb-2">📦 Chọn từ sản phẩm lẻ có sẵn</label>
+                            <div id="comboProductSelector" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                        </div>
+                        
+                        <button onclick="createCombo()" class="w-full bg-amber-500 text-white py-2 rounded-xl font-semibold">✨ Tạo combo</button>
+                        <button id="cancelEditComboBtn" onclick="cancelEditCombo()" class="w-full bg-gray-500 text-white py-2 rounded-xl font-semibold mt-2 hidden">✖️ Hủy chỉnh sửa</button>
+                    </div>
+                </div>
+                <div class="lg:col-span-2 bg-white rounded-2xl shadow-md overflow-hidden">
+                    <div class="bg-slate-100 px-5 py-3 border-b"><h3 class="font-bold"><i class="fas fa-cubes mr-2"></i> Danh sách combo</h3></div>
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr><th>Ảnh</th><th>Tên combo</th><th>Giá bán</th><th>Thành phần</th><th>Lợi nhuận</th><th>Đã bán</th><th>Thao tác</th>
+                            </thead>
+                            <tbody id="comboList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB NHẬP HÀNG -->
+        <div id="inventoryTab" class="hidden">
+            <div class="grid lg:grid-cols-3 gap-6">
+                <div class="bg-white rounded-2xl shadow-md p-5 h-fit">
+                    <h3 class="text-lg font-bold mb-4"><i class="fas fa-truck text-emerald-500"></i> Nhập hàng</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Chọn sản phẩm</label>
+                            <select id="importProductSelect" class="w-full p-2 border rounded-lg">
+                                <option value="">-- Chọn sản phẩm --</option>
+                            </select>
+                        </div>
+                        <!-- ========== THÊM DROPDOWN CHỌN VỊ ========== -->
+                        <div id="importFlavorDiv" class="hidden">
+                            <label class="block text-sm font-medium mb-1">Chọn vị</label>
+                            <select id="importFlavorSelect" class="w-full p-2 border rounded-lg">
+                                <option value="">-- Tất cả vị --</option>
+                            </select>
+                        </div>
+                        <!-- ========== KẾT THÚC ========== -->
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Số lượng nhập</label>
+                            <input type="number" id="importQuantity" placeholder="Số lượng" class="w-full p-2 border rounded-lg" min="1" value="1">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Giá nhập (VNĐ)</label>
+                            <input type="number" id="importPrice" placeholder="Giá nhập" class="w-full p-2 border rounded-lg">
+                            <p class="text-xs text-slate-400 mt-1">Để trống sẽ lấy giá nhập hiện tại</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Ghi chú</label>
+                            <input type="text" id="importNote" placeholder="Nhà cung cấp, ghi chú..." class="w-full p-2 border rounded-lg">
+                        </div>
+                        <button onclick="importStock()" class="w-full bg-emerald-600 text-white py-2 rounded-xl font-semibold">📦 Nhập hàng</button>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 space-y-4">
+                    <div class="bg-white rounded-2xl shadow-md p-4">
+                        <h3 class="font-bold text-md mb-3"><i class="fas fa-chart-simple text-orange-500"></i> 📋 DANH SÁCH CẦN NHẬP THÊM</h3>
+                        <p class="text-xs text-slate-400 mb-3">Dựa trên đơn hàng đã bán (kể cả sản phẩm đã hết hàng)</p>
+                        <div id="stockSummary" class="space-y-2 max-h-80 overflow-y-auto"></div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-md overflow-hidden">
+                        <div class="bg-slate-100 px-5 py-3 border-b flex justify-between items-center">
+                            <h3 class="font-bold"><i class="fas fa-history mr-2"></i> Lịch sử nhập hàng</h3>
+                            <button onclick="clearImportHistory()" class="text-red-500 text-xs">Xóa lịch sử</button>
+                        </div>
+                        <div class="table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr><th>Ngày nhập</th><th>Sản phẩm</th><th>Số lượng</th><th>Giá nhập</th><th>Thành tiền</th><th>Ghi chú</th><th>Thao tác</th></tr>
+                                </thead>
+                                <tbody id="importHistoryList"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB ĐƠN HÀNG -->
+        <div id="ordersTab" class="hidden">
+            <div class="bg-white rounded-2xl shadow-md p-5">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg"><i class="fas fa-chart-line text-emerald-500"></i> Lịch sử đơn hàng</h3>
+                    <button onclick="clearOrders()" class="text-red-500 text-sm">Xóa lịch sử</button>
+                </div>
+                <div id="orderList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                <div class="border-t pt-4 mt-4 text-right">
+                    <p class="text-lg font-bold">Tổng doanh thu: <span id="totalRevenue" class="text-emerald-600">0</span>đ</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL QUẢN LÝ CỬA HÀNG -->
+    <div id="storeModal" class="fixed inset-0 z-[2000] hidden items-center justify-center modal-overlay">
+        <div class="bg-white rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-purple-600"><i class="fas fa-store mr-2"></i> Quản lý thông tin cửa hàng</h2>
+                <button onclick="closeStoreModal()" class="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <div class="p-6 space-y-5">
+                <!-- Logo cửa hàng -->
+                <div class="text-center">
+                    <div class="relative inline-block">
+                        <div class="w-28 h-28 rounded-full bg-purple-100 flex items-center justify-center overflow-hidden border-4 border-purple-200 mx-auto" id="storeLogoContainer">
+                            <img id="storeLogoPreview" class="w-full h-full object-cover" src="https://picsum.photos/id/100/200/200" onerror="this.src='https://picsum.photos/200/200'">
+                        </div>
+                        <button onclick="document.getElementById('storeLogoInput').click()" class="absolute bottom-0 right-0 bg-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-purple-600">
+                            <i class="fas fa-camera text-xs"></i>
+                        </button>
+                        <input type="file" id="storeLogoInput" accept="image/*" class="hidden" onchange="handleStoreLogoUpload(event)">
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2">Logo cửa hàng</p>
+                </div>
+
+                <!-- Thông tin cơ bản -->
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Tên cửa hàng *</label>
+                        <input type="text" id="storeName" placeholder="Tên cửa hàng" class="w-full p-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Số điện thoại</label>
+                        <input type="tel" id="storePhone" placeholder="0xx xxx xxxx" class="w-full p-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Email</label>
+                        <input type="email" id="storeEmail" placeholder="store@example.com" class="w-full p-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Website</label>
+                        <input type="url" id="storeWebsite" placeholder="https://..." class="w-full p-2 border rounded-lg">
+                    </div>
+                </div>
+
+                <!-- Địa chỉ -->
+                <div>
+                    <label class="block text-sm font-medium mb-1">Địa chỉ cửa hàng</label>
+                    <textarea id="storeAddress" rows="2" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố" class="w-full p-2 border rounded-lg"></textarea>
+                </div>
+
+                <!-- Thông tin ngân hàng nhận thanh toán -->
+                <div class="border-t pt-4">
+                    <h3 class="font-semibold mb-3 text-blue-600"><i class="fas fa-university"></i> Thông tin nhận thanh toán</h3>
+                    <div class="grid md:grid-cols-2 gap-3">
+                        <input type="text" id="bankName" placeholder="Tên ngân hàng (VD: Vietcombank)" class="w-full p-2 border rounded-lg">
+                        <input type="text" id="bankAccountNumber" placeholder="Số tài khoản" class="w-full p-2 border rounded-lg">
+                        <div class="col-span-2">
+                            <input type="text" id="bankAccountName" placeholder="Tên chủ tài khoản" class="w-full p-2 border rounded-lg">
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2">Thông tin này sẽ hiển thị cho khách hàng khi họ chọn thanh toán chuyển khoản</p>
+                </div>
+
+                <!-- Mạng xã hội -->
+                <div class="border-t pt-4">
+                    <h3 class="font-semibold mb-3"><i class="fas fa-share-alt text-blue-500"></i> Mạng xã hội</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 text-center"><i class="fab fa-facebook text-blue-600 text-xl"></i></div>
+                            <input type="url" id="storeFacebook" placeholder="https://facebook.com/..." class="flex-1 p-2 border rounded-lg">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 text-center"><i class="fab fa-instagram text-pink-500 text-xl"></i></div>
+                            <input type="url" id="storeInstagram" placeholder="https://instagram.com/..." class="flex-1 p-2 border rounded-lg">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 text-center"><i class="fab fa-youtube text-red-600 text-xl"></i></div>
+                            <input type="url" id="storeYoutube" placeholder="https://youtube.com/..." class="flex-1 p-2 border rounded-lg">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 text-center"><i class="fab fa-tiktok text-black text-xl"></i></div>
+                            <input type="url" id="storeTiktok" placeholder="https://tiktok.com/@" class="flex-1 p-2 border rounded-lg">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 text-center"><i class="fab fa-zalo text-blue-500 text-xl"></i></div>
+                            <input type="text" id="storeZalo" placeholder="Số điện thoại Zalo" class="flex-1 p-2 border rounded-lg">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 text-center"><i class="fab fa-shopify text-green-600 text-xl"></i></div>
+                            <input type="url" id="storeShopee" placeholder="https://shopee.vn/..." class="flex-1 p-2 border rounded-lg">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thông tin khác -->
+                <div class="border-t pt-4">
+                    <h3 class="font-semibold mb-3"><i class="fas fa-clock text-gray-500"></i> Thông tin khác</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Giờ mở cửa</label>
+                            <input type="text" id="storeHours" placeholder="VD: 8:00 - 21:00" class="w-full p-2 border rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Ngày nghỉ</label>
+                            <input type="text" id="storeDaysOff" placeholder="VD: Chủ nhật" class="w-full p-2 border rounded-lg">
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label class="block text-sm font-medium mb-1">Mô tả cửa hàng</label>
+                        <textarea id="storeDescription" rows="3" placeholder="Giới thiệu về cửa hàng của bạn..." class="w-full p-2 border rounded-lg"></textarea>
+                    </div>
+                </div>
+
+                                <!-- Nút lưu -->
+                <div class="flex gap-3 pt-4 border-t">
+                    <button onclick="saveStoreInfo()" class="flex-1 bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700"><i class="fas fa-save mr-2"></i> Lưu thông tin</button>
+                    <button onclick="closeStoreModal()" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-300">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <script>
+        let currentStore = null;
+        let storeData = null;
+        let tempImage = "";
+        let editingProductId = null;
+        let editingComboId = null;
+        let tempComboImage = "";
+        let currentReturnOrderId = null;
+        let isReloading = false;
+
+        function init() {
+            let userStr = localStorage.getItem('currentUser');
+            if(!userStr) { window.location.href = 'register.html'; return; }
+            currentStore = JSON.parse(userStr);
+            document.getElementById('storeNameDisplay').innerHTML = `<i class="fas fa-store"></i> ${currentStore.storeName}`;
+            loadStoreData();
+            loadStoreInfo();
+        }
+
+    function loadStoreData() {
+    // 1. Tham chiếu đến dữ liệu của cửa hàng cụ thể này trên Firebase
+    const storeRef = db.ref('stores/' + storeId);
+
+    // 2. Lắng nghe dữ liệu (Realtime)
+    storeRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+
+        // Kiểm tra nếu cửa hàng không tồn tại trên Firebase
+        if (!data) {
+            document.getElementById('storeTitle').innerText = "Cửa hàng không tồn tại hoặc đã bị xóa";
+            return;
+        }
+
+        storeData = data;
+        storeInfo = storeData.storeInfo || {};
+
+        // Đảm bảo các mảng sản phẩm tồn tại để không bị lỗi code render
+        if (!storeData.products) storeData.products = [];
+        if (!storeData.combos) storeData.combos = [];
+        if (!storeData.orders) storeData.orders = [];
+
+        // 3. Lấy tên cửa hàng
+        // Lưu ý: Trên Firebase, ta nên ưu tiên lấy tên trong storeInfo đã lưu
+        currentStoreName = storeInfo.storeName || "Cửa hàng";
+
+        // 4. Cập nhật các thông tin hiển thị trên giao diện
+        document.getElementById('storeTitle').innerHTML = `<i class="fas fa-store"></i> ${currentStoreName}`;
+        document.getElementById('storeSlogan').innerText = storeInfo.description || "Mua sắm dễ dàng";
+        document.getElementById('storeNameDisplay').innerText = currentStoreName;
+        document.getElementById('storeAddressDisplay').innerText = storeInfo.address || "Đang cập nhật";
+        document.getElementById('storePhoneDisplay').innerText = storeInfo.phone || "Đang cập nhật";
+        document.getElementById('storeHoursDisplay').innerText = storeInfo.hours || "8:00 - 21:00";
+
+        if (storeInfo.logo) {
+            document.getElementById('storeLogo').src = storeInfo.logo;
+        }
+
+        // 5. Gọi các hàm hiển thị sản phẩm và giỏ hàng
+        renderProducts();
+        loadCart(); // Giỏ hàng vẫn có thể lưu ở LocalStorage của khách để họ không bị mất khi lỡ tay đóng web
+        updateCartDisplay();
+        
+        console.log("Cửa hàng đã sẵn sàng!");
+    }, (error) => {
+        console.error("Lỗi kết nối Firebase:", error);
+        document.getElementById('storeTitle').innerText = "Lỗi kết nối máy chủ!";
+    });
+}
+
+        // Load thông tin cửa hàng lên modal
+        function loadStoreInfo() {
+            let info = storeData.storeInfo || {};
+            document.getElementById('storeName').value = info.storeName || currentStore.storeName || '';
+            document.getElementById('storePhone').value = info.phone || '';
+            document.getElementById('storeEmail').value = info.email || '';
+            document.getElementById('storeWebsite').value = info.website || '';
+            document.getElementById('storeAddress').value = info.address || '';
+            document.getElementById('storeFacebook').value = info.facebook || '';
+            document.getElementById('storeInstagram').value = info.instagram || '';
+            document.getElementById('storeYoutube').value = info.youtube || '';
+            document.getElementById('storeTiktok').value = info.tiktok || '';
+            document.getElementById('storeZalo').value = info.zalo || '';
+            document.getElementById('storeShopee').value = info.shopee || '';
+            document.getElementById('storeHours').value = info.hours || '';
+            document.getElementById('storeDaysOff').value = info.daysOff || '';
+            document.getElementById('storeDescription').value = info.description || '';
+            if(info.logo) document.getElementById('storeLogoPreview').src = info.logo;
+        }
+
+        // Lưu thông tin cửa hàng
+                function saveStoreInfo() {
+            storeData.storeInfo = {
+                storeName: document.getElementById('storeName').value,
+                phone: document.getElementById('storePhone').value,
+                email: document.getElementById('storeEmail').value,
+                website: document.getElementById('storeWebsite').value,
+                address: document.getElementById('storeAddress').value,
+                facebook: document.getElementById('storeFacebook').value,
+                instagram: document.getElementById('storeInstagram').value,
+                youtube: document.getElementById('storeYoutube').value,
+                tiktok: document.getElementById('storeTiktok').value,
+                zalo: document.getElementById('storeZalo').value,
+                shopee: document.getElementById('storeShopee').value,
+                hours: document.getElementById('storeHours').value,
+                daysOff: document.getElementById('storeDaysOff').value,
+                description: document.getElementById('storeDescription').value,
+                logo: document.getElementById('storeLogoPreview').src,
+                // ========== THÊM THÔNG TIN NGÂN HÀNG ==========
+                bankInfo: {
+                    bankName: document.getElementById('bankName').value,
+                    accountNumber: document.getElementById('bankAccountNumber').value,
+                    accountName: document.getElementById('bankAccountName').value
+                }
+            };
+            saveStoreData();
+            closeStoreModal();
+            showToast("✅ Đã lưu thông tin cửa hàng!", "success");
+        }
+
+        function handleStoreLogoUpload(e) {
+            let file = e.target.files[0];
+            if(file) {
+                let reader = new FileReader();
+                reader.onload = (ev) => {
+                    document.getElementById('storeLogoPreview').src = ev.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function openStoreModal() {
+            loadStoreInfo();
+            document.getElementById('storeModal').classList.remove('hidden');
+            document.getElementById('storeModal').classList.add('flex');
+        }
+
+        function closeStoreModal() {
+            document.getElementById('storeModal').classList.add('hidden');
+            document.getElementById('storeModal').classList.remove('flex');
+        }
+
+        function updateInventoryNotification() {
+            let needCount = 0;
+            storeData.products.forEach(p => {
+                if(calculateNeedToImport(p) > 0) needCount++;
+            });
+            let notifSpan = document.getElementById('inventoryNotif');
+            if(needCount > 0) {
+                notifSpan.classList.remove('hidden');
+                notifSpan.innerText = needCount > 99 ? '99+' : needCount;
+            } else {
+                notifSpan.classList.add('hidden');
+            }
+        }
+
+function calculateSoldStats() {
+    console.log("=== BẮT ĐẦU TÍNH TOÁN SOLD STATS ===");
+    
+    // Reset soldCount và soldByFlavor
+    storeData.products.forEach(p => { 
+        p.soldCount = 0;
+        p.soldByFlavor = {};
+    });
+    storeData.combos.forEach(c => { c.soldCount = 0; });
+    
+    (storeData.orders || []).forEach(order => {
+        console.log("Đang xử lý đơn hàng:", order.orderId, "Status:", order.status);
+        
+        // Chỉ bỏ qua đơn đã hủy
+        if(order.status === 'Đã hủy') {
+            console.log("  -> Bỏ qua (đã hủy)");
+            return;
+        }
+        
+        order.items.forEach(item => {
+            console.log("  Item:", item);
+            
+            if(item.type === 'product') {
+                let product = storeData.products.find(p => p.id == item.id);
+                if(product) {
+                    product.soldCount = (product.soldCount || 0) + item.qty;
+                    console.log("    -> Cộng soldCount cho", product.name, "+", item.qty, "=", product.soldCount);
+                    
+                    // Lấy flavor từ nhiều nguồn khác nhau
+                    let flavor = item.flavor || item.selectedFlavor || null;
+                    console.log("    -> Flavor:", flavor);
+                    
+                    if(flavor) {
+                        if(!product.soldByFlavor) product.soldByFlavor = {};
+                        product.soldByFlavor[flavor] = (product.soldByFlavor[flavor] || 0) + item.qty;
+                        console.log("    -> soldByFlavor[", flavor, "] =", product.soldByFlavor[flavor]);
+                    } else {
+                        console.log("    -> KHÔNG CÓ FLAVOR! Sẽ không phân loại được vị");
+                    }
+                }
+            } else if(item.type === 'combo') {
+                // Xử lý combo
+                console.log("    -> Xử lý combo item:", item.name);
+                let combo = storeData.combos.find(c => c.id == item.id);
+                if(combo && combo.items) {
+                    combo.soldCount = (combo.soldCount || 0) + item.qty;
+                    
+                    combo.items.forEach(comboItem => {
+                        let product = storeData.products.find(p => p.id == comboItem.productId);
+                        if(product) {
+                            let qtySold = comboItem.qty * item.qty;
+                            product.soldCount = (product.soldCount || 0) + qtySold;
+                            
+                            let flavor = item.selectedFlavors ? item.selectedFlavors[comboItem.productId] : null;
+                            if(!flavor) flavor = comboItem.selectedFlavor;
+                            if(!flavor) flavor = comboItem.flavor;
+                            
+                            if(flavor) {
+                                if(!product.soldByFlavor) product.soldByFlavor = {};
+                                product.soldByFlavor[flavor] = (product.soldByFlavor[flavor] || 0) + qtySold;
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    });
+    
+    saveStoreData();
+    console.log("=== KẾT THÚC TÍNH TOÁN ===");
+    storeData.products.forEach(p => {
+        console.log(p.name, "- soldCount:", p.soldCount, "- soldByFlavor:", p.soldByFlavor);
+    });
+}
+
+        function calculateNeedToImport(product) {
+            let sold = product.soldCount || 0;
+            let stock = product.stock || 0;
+            let need = sold - stock;
+            return need > 0 ? need : 0;
+        }
+
+        function saveStoreData() { 
+            // Lưu dữ liệu lên Firebase
+            db.ref('stores/' + currentStore.storeId).set(storeData)
+            .then(() => {
+                console.log("Đã lưu lên Firebase thành công!");
+            })
+            .catch((error) => {
+                console.error("Lỗi khi lưu:", error);
+                showToast("Không thể lưu dữ liệu!", "error");
+            });
+            
+            // Vẫn gọi các hàm render phụ để UI mượt mà (không bắt buộc vì .on đã lo việc này)
+            renderImportSelect();
+            renderStockSummary();
+            updateInventoryNotification();
+        }
+
+        async function uploadImageToFirebase(file) {
+            const ref = storage.ref(`images/${currentStore.storeId}/${Date.now()}_${file.name}`);
+            await ref.put(file);
+            return await ref.getDownloadURL();
+        }
+
+        function clearImage() { tempImage = ""; document.getElementById('imageFile').value = ""; document.getElementById('uploadPlaceholder').classList.remove('hidden'); document.getElementById('previewContainer').classList.add('hidden'); }
+
+                // Xử lý upload ảnh cho combo
+         function handleComboImageUpload(event) {
+            let file = event.target.files[0];
+            if(!file) return;
+            if(!file.type.startsWith('image/')) {
+                showToast("Vui lòng chọn file ảnh", "error");
+                return;
+            }
+            let reader = new FileReader();
+            reader.onload = (ev) => {
+                tempComboImage = ev.target.result;  // <=== QUAN TRỌNG
+                document.getElementById('comboImagePreview').src = tempComboImage;
+                document.getElementById('comboUploadPlaceholder').classList.add('hidden');
+                document.getElementById('comboPreviewContainer').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Xóa ảnh combo
+        function clearComboImage() {
+            tempComboImage = "";
+            document.getElementById('comboImageFile').value = "";
+            document.getElementById('comboUploadPlaceholder').classList.remove('hidden');
+            document.getElementById('comboPreviewContainer').classList.add('hidden');
+            document.getElementById('comboImagePreview').src = "";
+        }
+
+        function startEditProduct(id) {
+            let product = storeData.products.find(p => p.id == id);
+            if(!product) return;
+            
+            editingProductId = id;
+            
+            document.getElementById('prodName').value = product.name;
+            document.getElementById('prodImport').value = product.importPrice;
+            document.getElementById('prodPrice').value = product.salePrice;
+            document.getElementById('prodFlavor').value = product.flavor || '';
+            document.getElementById('prodStock').value = product.stock;
+            
+            if(product.image && product.image !== "https://picsum.photos/200/150") {
+                tempImage = product.image;
+                document.getElementById('imagePreview').src = tempImage;
+                document.getElementById('uploadPlaceholder').classList.add('hidden');
+                document.getElementById('previewContainer').classList.remove('hidden');
+            } else {
+                clearImage();
+            }
+            
+            document.getElementById('formTitle').innerHTML = '<i class="fas fa-edit text-orange-500"></i> Chỉnh sửa sản phẩm';
+            let submitBtn = document.getElementById('submitProductBtn');
+            submitBtn.innerHTML = '✅ Hoàn thành chỉnh sửa';
+            submitBtn.classList.remove('bg-indigo-600');
+            submitBtn.classList.add('bg-emerald-600');
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+            document.getElementById('productFormCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            showToast(`Đang chỉnh sửa: ${product.name}`, "info");
+        }
+
+        function cancelEdit() {
+            editingProductId = null;
+            clearProductForm();
+            document.getElementById('formTitle').innerHTML = '<i class="fas fa-plus text-indigo-500"></i> Thêm sản phẩm';
+            let submitBtn = document.getElementById('submitProductBtn');
+            submitBtn.innerHTML = '➕ Thêm sản phẩm';
+            submitBtn.classList.remove('bg-emerald-600');
+            submitBtn.classList.add('bg-indigo-600');
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+            showToast("Đã hủy chỉnh sửa", "info");
+        }
+
+        function submitProduct() {
+            if(editingProductId) {
+                updateProduct();
+            } else {
+                addProduct();
+            }
+        }
+
+        function updateProduct() {
+            let product = storeData.products.find(p => p.id == editingProductId);
+            if(!product) return;
+            
+            let name = document.getElementById('prodName').value.trim();
+            let importPrice = parseFloat(document.getElementById('prodImport').value) || 0;
+            let salePrice = parseFloat(document.getElementById('prodPrice').value);
+            let flavor = document.getElementById('prodFlavor').value;
+            let stock = parseInt(document.getElementById('prodStock').value) || 0;
+            
+            if(!name || isNaN(salePrice)) { showToast("Nhập đủ thông tin", "error"); return; }
+            
+            product.name = name;
+            product.importPrice = importPrice;
+            product.salePrice = salePrice;
+            product.flavor = flavor;
+            product.stock = stock;
+            if(tempImage) product.image = tempImage;
+            
+            saveStoreData();
+            renderProducts();
+            renderComboSelector();
+            cancelEdit();
+            showToast("✅ Cập nhật sản phẩm thành công!", "success");
+        }
+
+        function addProduct() {
+            let name = document.getElementById('prodName').value.trim();
+            let importPrice = parseFloat(document.getElementById('prodImport').value) || 0;
+            let salePrice = parseFloat(document.getElementById('prodPrice').value);
+            let flavor = document.getElementById('prodFlavor').value;
+            let stock = parseInt(document.getElementById('prodStock').value) || 0;
+            if(!name || isNaN(salePrice)) { showToast("Nhập đủ thông tin", "error"); return; }
+            let image = tempImage || "https://picsum.photos/200/150";
+            storeData.products.push({ 
+                id: Date.now(), 
+                name, 
+                importPrice, 
+                salePrice, 
+                image, 
+                flavor, 
+                stock, 
+                totalImported: stock, 
+                soldCount: 0,
+                showRetail: true,   // <=== THÊM DÒNG NÀY
+                showCombo: true     // <=== THÊM DÒNG NÀY
+            });
+            // Đẩy lên Firebase
+            storeData.products.push(newProduct);
+            saveStoreData(); 
+            saveStoreData(); 
+            renderProducts(); 
+            renderComboSelector();  // <=== ĐÃ CÓ
+            clearProductForm(); 
+            showToast("Thêm thành công", "success");
+        }
+
+        function clearProductForm() {
+            document.getElementById('prodName').value = '';
+            document.getElementById('prodImport').value = '';
+            document.getElementById('prodPrice').value = '';
+            document.getElementById('prodFlavor').value = '';
+            document.getElementById('prodStock').value = '0';
+            clearImage();
+        }
+
+        function deleteProduct(id) {
+            if(confirm("Xóa sản phẩm này?")) { 
+                storeData.products = storeData.products.filter(p => p.id != id); 
+                storeData.combos = storeData.combos.filter(c => !c.items.some(i => i.productId == id));
+                saveStoreData(); renderProducts(); renderCombos(); renderComboSelector(); 
+                showToast("Đã xóa sản phẩm", "success");
+            }
+        }
+
+        function renderProducts() {
+            let html = '';
+            // Chỉ hiển thị sản phẩm thường (không phải combo-only)
+            let normalProducts = storeData.products.filter(p => !p.isComboOnly);
+            
+            normalProducts.forEach(p => { 
+                let profit = p.salePrice - p.importPrice;
+                let sold = p.soldCount || 0;
+                let needImport = calculateNeedToImport(p);
+                let statusClass = p.stock <= 0 ? 'badge-danger' : (p.stock <= 5 ? 'badge-warning' : 'badge-success');
+                let needClass = needImport > 0 ? 'badge-danger' : 'badge-info';
+                let rowClass = p.stock <= 0 ? 'stock-zero' : '';
+                
+                html += `<tr class="${rowClass}">
+                            <td><img src="${p.image}" class="w-12 h-12 rounded object-cover"></td>
+                            <td class="font-medium">${p.name}</td>
+                            <td>
+                                <label class="inline-flex items-center mr-2">
+                                    <input type="checkbox" class="show-retail" data-id="${p.id}" ${p.showRetail !== false ? 'checked' : ''} onchange="updateProductType(${p.id}, 'retail', this.checked)">
+                                    <span class="ml-1 text-xs">🛒 Bán lẻ</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" class="show-combo" data-id="${p.id}" ${p.showCombo !== false ? 'checked' : ''} onchange="updateProductType(${p.id}, 'combo', this.checked)">
+                                    <span class="ml-1 text-xs">🎁 Dùng combo</span>
+                                </label>
+                            </td>
+                            <td class="text-slate-600">${p.importPrice.toLocaleString()}đ</td>
+                            <td class="text-indigo-600 font-semibold">${p.salePrice.toLocaleString()}đ</td>
+                            <td class="text-emerald-600">+${profit.toLocaleString()}đ</td>
+                            <td><span class="${statusClass}">${p.stock}</span></td>
+                            <td class="text-slate-500">${(p.totalImported || p.stock).toLocaleString()}</td>
+                            <td class="text-amber-600 font-medium">${sold.toLocaleString()}</td>
+                            <td><span class="${needClass}">${needImport > 0 ? needImport.toLocaleString() : 'Đủ'}</span></td>
+                            <td class="max-w-[150px] truncate">${p.flavor || '—'}</td>
+                            <td>
+                                <button onclick="startEditProduct(${p.id})" class="text-blue-500 mr-2"><i class="fas fa-edit"></i></button>
+                                <button onclick="deleteProduct(${p.id})" class="text-red-500"><i class="fas fa-trash"></i></button>
+                            </td>
+                           </tr>`;
+            });
+            document.getElementById('productList').innerHTML = html || '<tr><td colspan="11" class="text-center py-4 text-slate-400">Chưa có sản phẩm nào</td></tr>';
+        }
+
+        function refreshComboSelector() {
+            renderComboSelector();
+            showToast("Đã cập nhật danh sách sản phẩm trong combo", "info");
+        }
+
+        function updateProductType(productId, type, isChecked) {
+            let product = storeData.products.find(p => p.id == productId);
+            if(!product) return;
+            
+            if(type === 'retail') {
+                product.showRetail = isChecked;
+            } else if(type === 'combo') {
+                product.showCombo = isChecked;
+            }
+            
+            saveStoreData();
+            
+            // Cập nhật lại giao diện
+            renderProducts();
+            renderComboSelector();  // <=== QUAN TRỌNG: Cập nhật danh sách combo ngay lập tức
+            showToast(`✅ Đã cập nhật: ${product.name} - ${type === 'retail' ? 'Bán lẻ' : 'Dùng combo'} ${isChecked ? 'bật' : 'tắt'}`, "success");
+        }
+
+    function renderStockSummary() {
+    let html = '';
+    let needList = [];
+    
+    storeData.products.forEach(p => {
+        // Nếu sản phẩm có vị
+        if(p.flavor && p.flavor.trim()) {
+            let flavors = p.flavor.split(',').map(f => f.trim()).filter(f => f);
+            
+            // Duyệt từng vị
+            flavors.forEach(flavor => {
+                let soldCount = (p.soldByFlavor && p.soldByFlavor[flavor]) || 0;
+                let stockCount = (p.stockByFlavor && p.stockByFlavor[flavor]) || 0;
+                let needCount = soldCount - stockCount;
+                
+                if(needCount > 0) {
+                    needList.push({
+                        productId: p.id,
+                        productName: p.name,
+                        flavor: flavor,
+                        need: needCount,
+                        sold: soldCount,
+                        stock: stockCount
+                    });
+                }
+            });
+        } else {
+            // Sản phẩm không có vị
+            let soldCount = p.soldCount || 0;
+            let stockCount = p.stock || 0;
+            let needCount = soldCount - stockCount;
+            
+            if(needCount > 0) {
+                needList.push({
+                    productId: p.id,
+                    productName: p.name,
+                    flavor: null,
+                    need: needCount,
+                    sold: soldCount,
+                    stock: stockCount
+                });
+            }
+        }
+    });
+    
+    if(needList.length === 0) {
+        html = '<div class="text-center py-6 text-slate-400 bg-slate-50 rounded-lg">🎉 Tất cả sản phẩm đều đủ hàng! Không cần nhập thêm.</div>';
+    } else {
+        html = `
+            <table class="w-full text-sm border-collapse">
+                <thead class="bg-slate-100 sticky top-0">
+                    <tr class="border-b">
+                        <th class="text-left py-2 px-2">📦 Sản phẩm</th>
+                        <th class="text-left py-2 px-2">🍽️ Vị</th>
+                        <th class="text-center py-2 px-2">📦 Tồn</th>
+                        <th class="text-center py-2 px-2">🛒 Đã bán</th>
+                        <th class="text-center py-2 px-2 text-red-600">⚠️ Cần nhập</th>
+                        <th class="text-center py-2 px-2">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        needList.forEach(item => {
+            let statusIcon = item.stock === 0 ? '🔴' : (item.need > 10 ? '🟠' : '🟡');
+            let flavorDisplay = item.flavor ? `<span class="badge-info px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700">${item.flavor}</span>` : '<span class="text-slate-400">—</span>';
+            
+            html += `
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="py-2 px-2 font-medium">${statusIcon} ${item.productName}</td>
+                    <td class="py-2 px-2">${flavorDisplay}</td>
+                    <td class="py-2 px-2 text-center ${item.stock === 0 ? 'text-red-600 font-bold' : ''}">${item.stock}</td>
+                    <td class="py-2 px-2 text-center font-medium">${item.sold}</td>
+                    <td class="py-2 px-2 text-center text-red-600 font-bold text-base">${item.need}</td>
+                    <td class="py-2 px-2 text-center">
+                        <button onclick="quickImportByFlavor('${item.productId}', '${item.flavor || ''}', ${item.need})" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs transition">
+                            <i class="fas fa-truck"></i> Nhập ${item.need}
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        let totalNeed = needList.reduce((sum, item) => sum + item.need, 0);
+        
+        html += `
+                </tbody>
+                <tfoot class="bg-slate-100 sticky bottom-0 border-t-2">
+                    <tr>
+                        <td colspan="4" class="py-2 px-2 text-right font-bold">📊 Tổng cần nhập:</td>
+                        <td class="py-2 px-2 text-center font-bold text-red-600 text-lg">${totalNeed}</td>
+                        <td class="py-2 px-2"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        `;
+    }
+    document.getElementById('stockSummary').innerHTML = html;
+}
+
+function quickImportByFlavor(productId, flavor, suggestedQty) {
+    console.log("quickImportByFlavor called:", {productId, flavor, suggestedQty});
+    
+    let product = storeData.products.find(p => p.id == productId);
+    if(product) {
+        // Reset các trường nhập hàng
+        document.getElementById('importProductSelect').value = productId;
+        document.getElementById('importQuantity').value = suggestedQty;  // Không nhân đôi
+        document.getElementById('importPrice').value = product.importPrice;
+        document.getElementById('importNote').value = '';
+        
+        // Xử lý chọn vị
+        if(flavor) {
+            // Kích hoạt onchange để hiện dropdown vị
+            let event = new Event('change');
+            document.getElementById('importProductSelect').dispatchEvent(event);
+            
+            // Delay để dropdown hiện rồi mới chọn vị
+            setTimeout(() => {
+                let flavorSelect = document.getElementById('importFlavorSelect');
+                if(flavorSelect) {
+                    // Tìm và chọn đúng vị
+                    let found = false;
+                    for(let i = 0; i < flavorSelect.options.length; i++) {
+                        if(flavorSelect.options[i].value === flavor) {
+                            flavorSelect.selectedIndex = i;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if(!found) {
+                        // Nếu không tìm thấy vị, chọn option "-- Tất cả vị --"
+                        flavorSelect.selectedIndex = 0;
+                    }
+                    // Kích hoạt sự kiện change để cập nhật
+                    flavorSelect.dispatchEvent(new Event('change'));
+                }
+            }, 150);
+        } else {
+            // Không có vị thì ẩn dropdown
+            let flavorDiv = document.getElementById('importFlavorDiv');
+            if(flavorDiv) flavorDiv.classList.add('hidden');
+        }
+        
+        // Chuyển sang tab nhập hàng
+        showTab('inventory');
+        
+        // Focus vào ô số lượng để dễ sửa
+        document.getElementById('importQuantity').focus();
+        document.getElementById('importQuantity').select();
+        
+        showToast(`Đã chọn ${product.name}${flavor ? ' - vị ' + flavor : ''}, cần nhập ${suggestedQty}`, "info");
+    } else {
+        showToast("Không tìm thấy sản phẩm!", "error");
+    }
+}
+
+        function quickImport(productId, suggestedQty) {
+            let product = storeData.products.find(p => p.id == productId);
+            if(product) {
+                document.getElementById('importProductSelect').value = productId;
+                document.getElementById('importQuantity').value = suggestedQty;
+                document.getElementById('importPrice').value = product.importPrice;
+                showTab('inventory');
+                document.getElementById('importQuantity').focus();
+                showToast(`Đã chọn ${product.name}, nhập ${suggestedQty} sản phẩm`, "info");
+            }
+        }
+
+function renderImportSelect() {
+    let select = document.getElementById('importProductSelect');
+    let flavorDiv = document.getElementById('importFlavorDiv');
+    let flavorSelect = document.getElementById('importFlavorSelect');
+    
+    if(!select) return;
+    select.innerHTML = '<option value="">-- Chọn sản phẩm --</option>';
+    
+    storeData.products.forEach(p => { 
+        let need = calculateNeedToImport(p);
+        let needText = need > 0 ? ` 🔴 Cần nhập ${need}` : ' 🟢 Đủ hàng';
+        let stockText = p.stock === 0 ? ' (HẾT HÀNG)' : '';
+        select.innerHTML += `<option value="${p.id}" data-flavor="${p.flavor || ''}" data-need="${need}">${p.name}${stockText} - Tồn: ${p.stock} | Đã bán: ${p.soldCount || 0}${needText}</option>`;
+    });
+    
+    select.onchange = function() {
+        let selected = select.options[select.selectedIndex];
+        let flavor = selected.getAttribute('data-flavor');
+        let need = selected.getAttribute('data-need');
+        let productId = parseInt(select.value);
+        let product = storeData.products.find(p => p.id == productId);
+        
+        // Cập nhật giá nhập
+        if(product) document.getElementById('importPrice').value = product.importPrice;
+        
+        // ========== SỬA: CHỈ SET SỐ LƯỢNG NẾU Ô ĐANG TRỐNG HOẶC = 0 ==========
+        let currentQty = document.getElementById('importQuantity').value;
+        if(!currentQty || currentQty == '0' || currentQty == '') {
+            if(need && parseInt(need) > 0) {
+                document.getElementById('importQuantity').value = need;
+            } else {
+                document.getElementById('importQuantity').value = '1';
+            }
+        }
+        // ========== KẾT THÚC ==========
+        
+        // XỬ LÝ DROPDOWN VỊ
+        if(product && product.flavor && product.flavor.trim()) {
+            let flavors = product.flavor.split(',').map(f => f.trim()).filter(f => f);
+            if(flavors.length > 0) {
+                flavorDiv.classList.remove('hidden');
+                flavorSelect.innerHTML = '<option value="">-- Tất cả vị (nhập chung) --</option>';
+                flavors.forEach(f => {
+                    flavorSelect.innerHTML += `<option value="${f}">🍽️ ${f}</option>`;
+                });
+            } else {
+                flavorDiv.classList.add('hidden');
+            }
+        } else {
+            flavorDiv.classList.add('hidden');
+        }
+    };
+}
+
+    function importStock() {
+        let productId = parseInt(document.getElementById('importProductSelect').value);
+        let quantity = parseInt(document.getElementById('importQuantity').value);
+        let importPrice = parseFloat(document.getElementById('importPrice').value);
+        let note = document.getElementById('importNote').value.trim();
+        let selectedFlavor = document.getElementById('importFlavorSelect').value;
+        
+        console.log("importStock called:", {productId, quantity, importPrice, selectedFlavor});
+        
+        if(!productId || !quantity || quantity <= 0) { 
+            showToast("Chọn sản phẩm và nhập số lượng", "error"); 
+            return; 
+        }
+        
+        let product = storeData.products.find(p => p.id == productId);
+        if(!product) { 
+            showToast("Không tìm thấy sản phẩm", "error"); 
+            return; 
+        }
+        
+        let finalImportPrice = importPrice || product.importPrice;
+        let totalCost = quantity * finalImportPrice;
+        
+        // XỬ LÝ NHẬP THEO VỊ
+        if(selectedFlavor && selectedFlavor !== "") {
+            if(!product.stockByFlavor) product.stockByFlavor = {};
+            if(!product.totalImportedByFlavor) product.totalImportedByFlavor = {};
+            
+            product.stockByFlavor[selectedFlavor] = (product.stockByFlavor[selectedFlavor] || 0) + quantity;
+            product.totalImportedByFlavor[selectedFlavor] = (product.totalImportedByFlavor[selectedFlavor] || 0) + quantity;
+            
+            // Cập nhật tổng tồn kho
+            product.stock = Object.values(product.stockByFlavor).reduce((a, b) => a + b, 0);
+            product.totalImported = Object.values(product.totalImportedByFlavor).reduce((a, b) => a + b, 0);
+            
+            console.log(`Đã nhập ${quantity} cho vị ${selectedFlavor}`);
+        } else {
+            product.stock += quantity;
+            product.totalImported = (product.totalImported || 0) + quantity;
+        }
+        
+        // Cập nhật giá nhập trung bình
+        if(finalImportPrice !== product.importPrice && product.totalImported > 0) {
+            let totalValue = (product.totalImported - quantity) * product.importPrice + totalCost;
+            product.importPrice = Math.round(totalValue / product.totalImported);
+        }
+        
+        // Lưu lịch sử
+        let importRecord = {
+            id: Date.now(),
+            date: new Date().toLocaleString('vi-VN'),
+            productId: product.id,
+            productName: product.name,
+            flavor: selectedFlavor || null,
+            quantity: quantity,
+            importPrice: finalImportPrice,
+            totalCost: totalCost,
+            note: note || ''
+        };
+        if(!storeData.importHistory) storeData.importHistory = [];
+        storeData.importHistory.unshift(importRecord);
+        
+        saveStoreData();
+        renderProducts();
+        renderImportHistory();
+        renderStockSummary();
+        renderImportSelect();
+        
+        // Reset form
+        document.getElementById('importQuantity').value = '1';
+        document.getElementById('importNote').value = '';
+        document.getElementById('importFlavorSelect').value = '';
+        
+        showToast(`✅ Đã nhập ${quantity} ${product.name}${selectedFlavor ? ' (' + selectedFlavor + ')' : ''} thành công!`, "success");
+    }
+
+function renderImportHistory() {
+    let html = '';
+    (storeData.importHistory || []).forEach(h => {
+        html += `<tr>
+                    <td class="text-sm">${h.date}</td>
+                    <td class="font-medium">${h.productName}${h.flavor ? `<span class="text-xs text-slate-400 ml-1">(${h.flavor})</span>` : ''}</td>
+                    <td class="text-emerald-600 font-semibold">${h.quantity}</td>
+                    <td>${h.importPrice.toLocaleString()}đ</td>
+                    <td class="text-amber-600">${h.totalCost.toLocaleString()}đ</td>
+                    <td class="text-slate-500 text-sm max-w-[200px] truncate">${h.note || '—'}</td>
+                    <td><button onclick="deleteImportRecord(${h.id})" class="text-red-500 text-sm"><i class="fas fa-trash"></i></button></td>
+                </td>`;
+    });
+    document.getElementById('importHistoryList').innerHTML = html || '<tr><td colspan="7" class="text-center py-4 text-slate-400">Chưa có lịch sử nhập hàng</td></tr>';
+}
+
+        function deleteImportRecord(id) {
+            if(confirm("Xóa lịch sử nhập này?")) {
+                let record = storeData.importHistory.find(h => h.id == id);
+                if(record) {
+                    let product = storeData.products.find(p => p.id == record.productId);
+                    if(product) {
+                        product.stock -= record.quantity;
+                        if(product.stock < 0) product.stock = 0;
+                    }
+                }
+                storeData.importHistory = storeData.importHistory.filter(h => h.id != id);
+                saveStoreData();
+                renderProducts();
+                renderImportHistory();
+                renderStockSummary();
+                renderImportSelect();
+                showToast("Đã xóa", "info");
+            }
+        }
+
+        function clearImportHistory() {
+            if(confirm("Xóa toàn bộ lịch sử nhập hàng?")) {
+                for(let h of storeData.importHistory) {
+                    let product = storeData.products.find(p => p.id == h.productId);
+                    if(product) product.stock -= h.quantity;
+                }
+                storeData.importHistory = [];
+                saveStoreData();
+                renderProducts();
+                renderImportHistory();
+                renderStockSummary();
+                renderImportSelect();
+                showToast("Đã xóa lịch sử nhập hàng", "info");
+            }
+        }
+              
+        function renderComboSelector() {
+            let container = document.getElementById('comboProductSelector');
+            if(!container) return;
+            
+            // CHỈ LẤY SẢN PHẨM CÓ showCombo === true
+            let comboProducts = storeData.products.filter(p => p.showCombo === true);
+            
+            console.log("renderComboSelector - Tổng sản phẩm:", storeData.products.length);
+            console.log("renderComboSelector - Sản phẩm dùng combo:", comboProducts.length);
+            
+            if(comboProducts.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400 italic">Chưa có sản phẩm nào được chọn dùng combo</p>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            comboProducts.forEach(p => { 
+                let flavors = (p.flavor && p.flavor.trim()) ? p.flavor.split(',').map(f => f.trim()).filter(f => f) : [];
+                let flavorHtml = flavors.length > 0 ? `
+                    <div class="mt-1 ml-6">
+                        <select data-flavor-id="${p.id}" class="combo-flavor-select" onchange="updateComboItemFlavor(${p.id}, this.value)">
+                            <option value="">-- Chọn vị mặc định --</option>
+                            ${flavors.map(f => `<option value="${f}">🍽️ ${f}</option>`).join('')}
+                        </select>
+                    </div>
+                ` : `<input type="hidden" data-flavor-id="${p.id}" class="combo-flavor-select" value="">`;
+                
+                container.innerHTML += `
+                    <div class="flex items-center gap-2 py-1 border-b pb-1">
+                        <input type="checkbox" value="${p.id}" class="combo-cb w-4 h-4">
+                        <span class="text-sm flex-1">${escapeHtml(p.name)}${p.flavor ? `<span class="flavor-badge ml-2"><i class="fas fa-tag"></i> ${p.flavor}</span>` : ''}</span>
+                        <input type="number" data-id="${p.id}" class="combo-qty w-16 p-1 border rounded text-sm text-center" min="1" value="1">
+                    </div>
+                    ${flavorHtml}
+                `;
+            });
+        }
+
+        let comboItemFlavors = {}; // Lưu tạm flavor cho từng sản phẩm trong combo đang tạo
+
+        function updateComboItemFlavor(productId, flavor) {
+            if(flavor) {
+                comboItemFlavors[productId] = flavor;
+            } else {
+                delete comboItemFlavors[productId];
+            }
+        }
+
+        function getSelectedFlavor(productId) {
+            let select = document.querySelector(`.combo-flavor-select[data-flavor-id="${productId}"]`);
+            if(select && select.value) {
+                return select.value;
+            }
+            return null;
+        }
+
+                // Bắt đầu chỉnh sửa combo
+            function startEditCombo(comboId) {
+    let combo = storeData.combos.find(c => c.id == comboId);
+    if(!combo) return;
+    
+    editingComboId = comboId;
+    
+    // RESET lại comboItemFlavors trước khi load
+    comboItemFlavors = {};  // <=== THÊM DÒNG NÀY
+    
+    // Đổ dữ liệu lên form
+    document.getElementById('comboName').value = combo.name;
+    document.getElementById('comboPrice').value = combo.salePrice;
+    
+    // LOAD ẢNH COMBO
+    if(combo.image && combo.image !== "https://picsum.photos/id/100/200/150") {
+        tempComboImage = combo.image;
+        document.getElementById('comboImagePreview').src = tempComboImage;
+        document.getElementById('comboUploadPlaceholder').classList.add('hidden');
+        document.getElementById('comboPreviewContainer').classList.remove('hidden');
+    } else {
+        clearComboImage();
+    }
+    document.querySelectorAll('.combo-cb').forEach(cb => cb.checked = false);
+    document.querySelectorAll('.combo-qty').forEach(qty => qty.value = '1');
+    
+    // Cập nhật dropdown flavor sau khi render
+    setTimeout(() => {
+        for(let [productId, flavor] of Object.entries(comboItemFlavors)) {
+            let flavorSelect = document.querySelector(`.combo-flavor-select[data-flavor-id="${productId}"]`);
+            if(flavorSelect) {
+                flavorSelect.value = flavor;
+            }
+        }
+    }, 100);
+    
+    let createBtn = document.querySelector('#combosTab button[onclick="createCombo()"]');
+    if(createBtn) {
+        createBtn.innerHTML = '✏️ Cập nhật combo';
+        createBtn.classList.remove('bg-amber-500');
+        createBtn.classList.add('bg-emerald-600');
+    }
+    
+    let cancelBtn = document.getElementById('cancelEditComboBtn');
+    if(cancelBtn) cancelBtn.classList.remove('hidden');
+    
+    document.getElementById('combosTab').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    showToast(`Đang chỉnh sửa combo: ${combo.name}`, "info");
+}
+        
+        // Hủy chỉnh sửa combo
+        function cancelEditCombo() {
+    editingComboId = null;
+    comboItemFlavors = {};  // <=== THÊM DÒNG NÀY
+    clearComboImage();
+    
+    document.getElementById('comboName').value = '';
+    document.getElementById('comboPrice').value = '';
+    document.querySelectorAll('.combo-cb').forEach(cb => cb.checked = false);
+    document.querySelectorAll('.combo-qty').forEach(qty => qty.value = '1');
+    
+    let createBtn = document.querySelector('#combosTab button[onclick="createCombo()"]');
+    if(createBtn) {
+        createBtn.innerHTML = '✨ Tạo combo';
+        createBtn.classList.remove('bg-emerald-600');
+        createBtn.classList.add('bg-amber-500');
+    }
+    
+    let cancelBtn = document.getElementById('cancelEditComboBtn');
+    if(cancelBtn) cancelBtn.classList.add('hidden');
+    
+    showToast("Đã hủy chỉnh sửa combo", "info");
+}
+
+        function createCombo() {
+    let name = document.getElementById('comboName').value.trim();
+    let salePrice = parseFloat(document.getElementById('comboPrice').value);
+    if(!name || isNaN(salePrice)) { showToast("Nhập tên và giá combo", "error"); return; }
+    
+    // Lấy các sản phẩm lẻ được chọn
+    let items = [];
+    document.querySelectorAll('.combo-cb').forEach(cb => { 
+        if(cb.checked) { 
+            let prodId = parseInt(cb.value); 
+            let qtyInput = document.querySelector(`.combo-qty[data-id="${prodId}"]`);
+            let qty = qtyInput ? (parseInt(qtyInput.value) || 1) : 1;
+            let selectedFlavor = getSelectedFlavor(prodId);
+            items.push({ 
+                productId: prodId, 
+                qty: qty, 
+                isComboOnly: false,
+                flavor: selectedFlavor  // LƯU VỊ VÀO COMBO
+            });
+        } 
+    });
+    
+    if(items.length === 0) { showToast("Chọn ít nhất 1 sản phẩm hoặc thêm món combo", "error"); return; }
+    
+    let totalImport = 0, totalRetail = 0;
+    let itemsDisplay = [];
+    
+    for(let it of items) {
+        if(it.isComboOnly) {
+            let prod = storeData.products.find(p => p.id === it.productId);
+            if(prod) {
+                totalImport += prod.importPrice * it.qty;
+                itemsDisplay.push(`${prod.name} (chỉ combo) x${it.qty}`);
+            }
+        } else {
+            let prod = storeData.products.find(p => p.id == it.productId);
+            if(prod) { 
+                totalImport += prod.importPrice * it.qty; 
+                totalRetail += prod.salePrice * it.qty;
+                let flavorText = it.flavor ? ` (${it.flavor})` : '';
+                itemsDisplay.push(`${prod.name}${flavorText} x${it.qty}`);
+            }
+        }
+    }
+    
+    let profit = salePrice - totalImport;
+    let compareMsg = totalRetail > 0 ? `Bán lẻ từng món: ${totalRetail.toLocaleString()}đ | Lợi hơn ${(totalRetail - salePrice).toLocaleString()}đ` : `Chỉ bán theo combo`;
+    
+    // Xác định ảnh combo
+    let finalImage = tempComboImage;
+    if(!finalImage || finalImage === "") {
+        finalImage = "https://picsum.photos/id/100/200/150";
+    }
+    
+    // KIỂM TRA: Nếu đang ở chế độ chỉnh sửa -> CẬP NHẬT
+    if(editingComboId) {
+        let index = storeData.combos.findIndex(c => c.id == editingComboId);
+        if(index !== -1) {
+            storeData.combos[index] = { 
+                ...storeData.combos[index],
+                name: name, 
+                salePrice: salePrice, 
+                image: finalImage,
+                items: items, 
+                itemsDisplay: itemsDisplay,
+                totalImport: totalImport,
+                totalRetail: totalRetail,
+                profit: profit, 
+                compareMsg: compareMsg
+            };
+            saveStoreData();
+            renderCombos();
+            showToast(`✅ Đã cập nhật combo "${name}" thành công!`, "success");
+            cancelEditCombo();
+        }
+    } 
+    // ========== THÊM PHẦN NÀY: TẠO COMBO MỚI ==========
+    else {
+        let newCombo = {
+            id: Date.now(),
+            name: name,
+            salePrice: salePrice,
+            image: finalImage,
+            items: items,
+            itemsDisplay: itemsDisplay,
+            totalImport: totalImport,
+            totalRetail: totalRetail,
+            profit: profit,
+            compareMsg: compareMsg,
+            soldCount: 0,
+            createdAt: new Date().toLocaleString()
+        };
+        storeData.combos.push(newCombo);
+        saveStoreData();
+        renderCombos();
+        
+        // Reset form sau khi tạo
+        document.getElementById('comboName').value = '';
+        document.getElementById('comboPrice').value = '';
+        document.querySelectorAll('.combo-cb').forEach(cb => cb.checked = false);
+        document.querySelectorAll('.combo-qty').forEach(qty => qty.value = '1');
+        clearComboImage();  // Xóa ảnh preview
+        
+        showToast(`✅ Đã tạo combo "${name}" thành công!`, "success");
+    }
+}
+
+                // Reset form tạo combo
+        function resetComboForm() {
+            // Reset tên combo
+            document.getElementById('comboName').value = '';
+            // Reset giá combo
+            document.getElementById('comboPrice').value = '';
+            // Bỏ chọn tất cả checkbox sản phẩm lẻ
+            document.querySelectorAll('.combo-cb').forEach(cb => cb.checked = false);
+            // Thông báo
+            showToast("Đã reset form combo", "info");
+        }
+
+        function deleteCombo(id) { 
+            if(confirm("Xóa combo này?")) { 
+                storeData.combos = storeData.combos.filter(c => c.id != id); 
+                saveStoreData(); 
+                renderCombos(); 
+                showToast("Đã xóa combo", "success");
+            } 
+        }
+
+        function renderCombos() {
+            let html = '';
+            storeData.combos.forEach(c => { 
+                let itemsText = c.itemsDisplay ? c.itemsDisplay.join(', ') : 
+                    c.items.map(it => { 
+                        if(it.isComboOnly) return `${it.name} (chỉ combo)`;
+                        let p = storeData.products.find(pr => pr.id == it.productId); 
+                        return `${p?.name} x${it.qty}`; 
+                    }).join(', '); 
+                html += `<tr>
+                            <td><img src="${c.image || 'https://picsum.photos/id/100/200/150'}" class="w-12 h-12 rounded object-cover"></td>  <!-- <=== THÊM CỘT ẢNH -->
+                            <td class="font-medium">${escapeHtml(c.name)}</td>
+                            <td class="text-amber-600 font-semibold">${c.salePrice.toLocaleString()}đ</td>
+                            <td class="text-sm">${itemsText}</td>
+                            <td class="text-emerald-600">+${c.profit.toLocaleString()}đ</td>
+                            <td class="text-slate-600">${c.soldCount || 0}</td>
+                            <td>
+                                <button onclick="startEditCombo(${c.id})" class="text-blue-500 mr-2"><i class="fas fa-edit"></i></button>
+                                <button onclick="deleteCombo(${c.id})" class="text-red-500"><i class="fas fa-trash"></i></button>
+                            </td>
+                          </tr>`;
+            });
+            document.getElementById('comboList').innerHTML = html || '<tr><td colspan="7" class="text-center py-4">Chưa có combo nào</td></tr>';
+        }
+
+        // Cập nhật trạng thái đơn hàng
+        function updateOrderStatus(orderId, newStatus) {
+            let order = storeData.orders.find(o => o.orderId === orderId);
+            if(order) {
+                order.status = newStatus;
+                saveStoreData();
+                renderOrders();
+                showToast(`Đã cập nhật trạng thái đơn hàng #${orderId} thành "${newStatus}"`, "success");
+            }
+        }
+
+        // Xóa đơn hàng
+        function deleteOrder(orderId) {
+            if(confirm("Xóa đơn hàng này?")) {
+                storeData.orders = storeData.orders.filter(o => o.orderId !== orderId);
+                saveStoreData();
+                renderOrders();
+                showToast("Đã xóa đơn hàng", "success");
+            }
+        }
+
+                // ==================== QUẢN LÝ ĐƠN HÀNG ====================
+        
+        // Cập nhật trạng thái đơn hàng (nếu là hủy thì xóa luôn)
+window.updateOrderStatus = function(orderId, newStatus) {
+    console.log("updateOrderStatus called:", orderId, newStatus);
+    let order = storeData.orders.find(o => o.orderId === orderId);
+    if(order) {
+        // Nếu là hủy đơn, hoàn lại số lượng sản phẩm vào kho
+        if(newStatus === 'Đã hủy' && order.status !== 'Đã hủy') {
+            // Hoàn lại số lượng cho từng sản phẩm trong đơn
+            order.items.forEach(item => {
+                if(item.type === 'product') {
+                    let product = storeData.products.find(p => p.id == item.id);
+                    if(product) {
+                        // Hoàn theo vị nếu có
+                        if(item.flavor && product.stockByFlavor) {
+                            product.stockByFlavor[item.flavor] = (product.stockByFlavor[item.flavor] || 0) + item.qty;
+                            product.stock = Object.values(product.stockByFlavor).reduce((a, b) => a + b, 0);
+                        } else {
+                            product.stock += item.qty;
+                        }
+                        // Cập nhật lại số lượng đã bán
+                        product.soldCount = Math.max(0, (product.soldCount || 0) - item.qty);
+                        
+                        // Hoàn lại soldByFlavor
+                        if(item.flavor && product.soldByFlavor) {
+                            product.soldByFlavor[item.flavor] = Math.max(0, (product.soldByFlavor[item.flavor] || 0) - item.qty);
+                        }
+                    }
+                } else if(item.type === 'combo') {
+                    let combo = storeData.combos.find(c => c.id == item.id);
+                    if(combo && combo.items) {
+                        combo.items.forEach(comboItem => {
+                            let product = storeData.products.find(p => p.id == comboItem.productId);
+                            if(product) {
+                                let qtyToReturn = comboItem.qty * item.qty;
+                                
+                                // Hoàn theo vị nếu có
+                                if(comboItem.selectedFlavor && product.stockByFlavor) {
+                                    product.stockByFlavor[comboItem.selectedFlavor] = (product.stockByFlavor[comboItem.selectedFlavor] || 0) + qtyToReturn;
+                                    product.stock = Object.values(product.stockByFlavor).reduce((a, b) => a + b, 0);
+                                } else {
+                                    product.stock += qtyToReturn;
+                                }
+                                
+                                product.soldCount = Math.max(0, (product.soldCount || 0) - qtyToReturn);
+                                
+                                // Hoàn lại soldByFlavor
+                                if(comboItem.selectedFlavor && product.soldByFlavor) {
+                                    product.soldByFlavor[comboItem.selectedFlavor] = Math.max(0, (product.soldByFlavor[comboItem.selectedFlavor] || 0) - qtyToReturn);
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+            order.status = newStatus;
+            order.cancelledAt = new Date().toLocaleString('vi-VN');
+            saveStoreData();
+            renderProducts();
+            renderOrders();
+            renderStockSummary();
+            showToast(`🗑 Đã hủy đơn hàng #${orderId} và hoàn lại số lượng vào kho`, "success");
+        } else if(newStatus !== 'Đã hủy') {
+            // Các trạng thái khác thì cập nhật bình thường
+            order.status = newStatus;
+            saveStoreData();
+            renderOrders();
+            showToast(`✅ Đã cập nhật đơn hàng #${orderId} thành "${newStatus}"`, "success");
+        } else {
+            showToast("Đơn hàng đã được hủy trước đó!", "info");
+        }
+    } else {
+        showToast("Không tìm thấy đơn hàng!", "error");
+    }
+}
+
+        // Xóa đơn hàng
+        window.deleteOrder = function(orderId) {
+            console.log("deleteOrder called:", orderId);
+            if(confirm("⚠️ Xóa đơn hàng này vĩnh viễn? Hành động này không thể hoàn tác!")) {
+                storeData.orders = storeData.orders.filter(o => o.orderId !== orderId);
+                saveStoreData();
+                renderOrders();
+                showToast("🗑 Đã xóa đơn hàng vĩnh viễn", "success");
+            }
+        }
+
+        // Xóa toàn bộ lịch sử đơn hàng
+        window.clearOrders = function() { 
+            if(confirm("⚠️ Xóa toàn bộ lịch sử đơn hàng? Hành động này không thể hoàn tác!")) { 
+                storeData.orders = []; 
+                saveStoreData(); 
+                calculateSoldStats(); 
+                renderProducts(); 
+                renderCombos(); 
+                renderOrders(); 
+                renderStockSummary(); 
+                showToast("Đã xóa toàn bộ lịch sử đơn hàng", "info"); 
+            } 
+        }
+
+        // Hiển thị danh sách đơn hàng
+        function renderOrders() {
+            let orders = storeData.orders || [];
+            let total = 0;
+            let html = '';
+            
+            if(orders.length === 0) {
+                document.getElementById('orderList').innerHTML = '<div class="text-center py-10 text-slate-400">📭 Chưa có đơn hàng nào</div>';
+                document.getElementById('totalRevenue').innerText = '0';
+                return;
+            }
+            
+            // Sắp xếp đơn hàng mới nhất lên đầu
+            let sortedOrders = [...orders].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            
+            sortedOrders.forEach((o) => { 
+                let orderTotal = o.subtotal || o.total || 0;
+                total += orderTotal;
+                
+                // Xác định màu cho trạng thái
+                let statusColor = '';
+                let statusText = o.status || 'Chờ xác nhận';
+                switch(statusText) {
+                    case 'Chờ xác nhận': statusColor = 'bg-orange-100 text-orange-700'; break;
+                    case 'Đã xác nhận': statusColor = 'bg-blue-100 text-blue-700'; break;
+                    case 'Đang giao hàng': statusColor = 'bg-purple-100 text-purple-700'; break;
+                    case 'Hoàn thành': statusColor = 'bg-green-100 text-green-700'; break;
+                    case 'Đã hủy': statusColor = 'bg-red-100 text-red-700'; break;
+                    default: statusColor = 'bg-gray-100 text-gray-700';
+                }
+                
+                // Hiển thị thông tin khách hàng
+                let customerInfoHtml = '';
+                let customer = o.customerInfo || {};
+                
+                if(o.deliveryMethod === 'ship') {
+                    customerInfoHtml = `
+                        <div class="bg-blue-50 p-3 rounded-lg mt-2 text-sm">
+                            <div class="font-bold text-blue-700 mb-2"><i class="fas fa-user-circle"></i> THÔNG TIN KHÁCH HÀNG</div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div><i class="fas fa-user w-5"></i> Tên: <span class="font-medium">${escapeHtml(customer.name) || 'Chưa có'}</span></div>
+                                <div><i class="fas fa-phone w-5"></i> SĐT: <span class="font-medium">${escapeHtml(customer.phone) || 'Chưa có'}</span></div>
+                                <div class="col-span-2"><i class="fas fa-map-marker-alt w-5"></i> Địa chỉ: <span class="font-medium">${escapeHtml(customer.address) || 'Chưa có'}</span></div>
+                                ${customer.note ? `<div class="col-span-2"><i class="fas fa-sticky-note w-5"></i> Ghi chú: ${escapeHtml(customer.note)}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    customerInfoHtml = `
+                        <div class="bg-purple-50 p-3 rounded-lg mt-2 text-sm">
+                            <div class="font-bold text-purple-700 mb-2"><i class="fas fa-store"></i> HÌNH THỨC: ĐẾN LẤY TẠI CỬA HÀNG</div>
+                            <div><i class="fas fa-map-marker-alt w-5"></i> Địa chỉ: ${escapeHtml(storeData.storeInfo?.address) || 'Đang cập nhật'}</div>
+                            <div><i class="fas fa-phone w-5"></i> Liên hệ: ${escapeHtml(storeData.storeInfo?.phone) || 'Đang cập nhật'}</div>
+                        </div>
+                    `;
+                }
+                
+                // Tạo HTML cho các nút hành động dựa trên trạng thái
+                let actionButtons = '';
+                if(statusText === 'Chờ xác nhận') {
+                    actionButtons = `
+                        <button onclick="updateOrderStatus('${o.orderId}', 'Đã xác nhận')" class="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-check"></i> Xác nhận</button>
+                        <button onclick="updateOrderStatus('${o.orderId}', 'Đã hủy')" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-times"></i> Hủy đơn</button>
+                    `;
+                } else if(statusText === 'Đã xác nhận') {
+                    actionButtons = `
+                        <button onclick="updateOrderStatus('${o.orderId}', 'Đang giao hàng')" class="bg-purple-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-truck"></i> Đang giao</button>
+                        <button onclick="updateOrderStatus('${o.orderId}', 'Đã hủy')" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-times"></i> Hủy đơn</button>
+                    `;
+                } else if(statusText === 'Đang giao hàng') {
+                    actionButtons = `
+                        <button onclick="updateOrderStatus('${o.orderId}', 'Hoàn thành')" class="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-check-circle"></i> Hoàn thành</button>
+                        <button onclick="updateOrderStatus('${o.orderId}', 'Đã hủy')" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-times"></i> Hủy đơn</button>
+                    `;
+                } else if(statusText === 'Yêu cầu trả hàng') {
+                    actionButtons = `
+                        <button onclick="viewReturnRequest('${o.orderId}')" class="bg-orange-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-undo-alt"></i> Xử lý trả hàng</button>
+                    `;
+                } else if(statusText === 'Đã hoàn tiền') {
+                    actionButtons = `<span class="text-emerald-600 text-sm"><i class="fas fa-money-bill-wave"></i> Đã hoàn tiền</span>`;
+                }
+                
+                html += `
+                    <div class="border rounded-xl p-4 mb-4 bg-white shadow-sm hover:shadow-md transition">
+                        <div class="flex justify-between items-start flex-wrap gap-2">
+                            <div>
+                                <span class="font-bold text-indigo-600">#${o.orderId}</span>
+                                <span class="ml-2 text-xs text-slate-400">${o.date}</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <span class="px-2 py-1 rounded-full text-xs font-semibold ${statusColor}">${statusText}</span>
+                                <span class="px-2 py-1 rounded-full text-xs font-semibold ${o.deliveryMethod === 'ship' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}">
+                                    ${o.deliveryMethod === 'ship' ? '🚚 Giao hàng' : '🏪 Đến lấy'}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <div class="font-semibold text-sm text-slate-500">📦 SẢN PHẨM ĐẶT MUA:</div>
+                            <div class="text-sm mt-1 space-y-1">
+                                ${o.items.map(item => `<div class="flex justify-between"><span>• ${escapeHtml(item.name)} x${item.qty}</span><span class="font-medium">${(item.price * item.qty).toLocaleString()}đ</span></div>`).join('')}
+                                <div class="border-t pt-1 mt-1 flex justify-between font-bold"><span>Tổng cộng:</span><span class="text-emerald-600">${orderTotal.toLocaleString()}đ</span></div>
+                            </div>
+                        </div>
+                        
+                        ${customerInfoHtml}
+                        
+                        <div class="flex gap-2 mt-4 pt-2 border-t flex-wrap">
+                            ${actionButtons}
+                            <button onclick="deleteOrder('${o.orderId}')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded-lg text-sm transition"><i class="fas fa-trash-alt"></i> Xóa</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('orderList').innerHTML = html;
+            document.getElementById('totalRevenue').innerHTML = total.toLocaleString();
+        }
+
+                // ==================== QUẢN LÝ TRẢ HÀNG ====================
+        
+        
+        // Mở modal xem yêu cầu trả hàng
+        window.viewReturnRequest = function(orderId) {
+            console.log("viewReturnRequest called:", orderId);
+            let order = storeData.orders.find(o => o.orderId === orderId);
+            if(!order || !order.returnRequest) {
+                showToast("Không tìm thấy yêu cầu trả hàng!", "error");
+                return;
+            }
+            
+            currentReturnOrderId = orderId;
+            let req = order.returnRequest;
+            let customer = order.customerInfo || {};
+            
+            // Hiển thị thông tin yêu cầu
+            document.getElementById('returnRequestOrderId').innerText = order.orderId;
+            document.getElementById('returnRequestCustomerName').innerText = customer.name || "Khách đến lấy";
+            document.getElementById('returnRequestCustomerPhone').innerText = customer.phone || "Không có";
+            document.getElementById('returnRequestCustomerAddress').innerText = customer.address || "Đến lấy tại cửa hàng";
+            document.getElementById('returnRequestReason').innerText = req.reason;
+            document.getElementById('returnRequestDescription').innerText = req.description;
+            document.getElementById('returnRequestDate').innerText = req.requestedAt || order.date;
+            document.getElementById('returnRequestTotal').innerText = (order.subtotal || order.total || 0).toLocaleString();
+            
+            // ========== HIỂN THỊ THÔNG TIN TÀI KHOẢN NGÂN HÀNG ==========
+            if(req.bankInfo) {
+                document.getElementById('displayBankName').innerText = req.bankInfo.bankName || '---';
+                document.getElementById('displayAccountNumber').innerText = req.bankInfo.accountNumber || '---';
+                document.getElementById('displayAccountName').innerText = req.bankInfo.accountName || '---';
+                // Lưu vào hidden để dùng cho hoàn tiền
+                document.getElementById('returnBankName').value = req.bankInfo.bankName || '';
+                document.getElementById('returnAccountNumber').value = req.bankInfo.accountNumber || '';
+                document.getElementById('returnAccountName').value = req.bankInfo.accountName || '';
+            } else {
+                document.getElementById('displayBankName').innerText = '---';
+                document.getElementById('displayAccountNumber').innerText = '---';
+                document.getElementById('displayAccountName').innerText = '---';
+            }
+            
+            // Hiển thị ảnh/video
+            let filesContainer = document.getElementById('returnRequestFiles');
+            filesContainer.innerHTML = '';
+            if(req.files && req.files.length > 0) {
+                req.files.forEach((file, idx) => {
+                    let isImage = file.type.startsWith('image/');
+                    if(isImage) {
+                        filesContainer.innerHTML += `<div class="relative">
+                            <img src="${file.data}" class="w-24 h-24 object-cover rounded-lg cursor-pointer border" onclick="openFilePreview('${file.data}', 'image')">
+                            <button onclick="openFilePreview('${file.data}', 'image')" class="absolute bottom-1 right-1 bg-black/50 text-white text-xs px-1 rounded">🔍</button>
+                        </div>`;
+                    } else {
+                        filesContainer.innerHTML += `<div class="relative">
+                            <video src="${file.data}" class="w-24 h-24 object-cover rounded-lg cursor-pointer border" onclick="openFilePreview('${file.data}', 'video')"></video>
+                            <button onclick="openFilePreview('${file.data}', 'video')" class="absolute bottom-1 right-1 bg-black/50 text-white text-xs px-1 rounded">▶️</button>
+                        </div>`;
+                    }
+                });
+            } else {
+                filesContainer.innerHTML = '<p class="text-slate-400 text-sm">Không có ảnh/video đính kèm</p>';
+            }
+            
+            // Hiển thị modal
+            document.getElementById('returnRequestModal').classList.remove('hidden');
+            document.getElementById('returnRequestModal').classList.add('flex');
+        }
+        
+        // Mở preview ảnh/video
+        window.openFilePreview = function(src, type) {
+            let modal = document.getElementById('filePreviewModal');
+            let content = document.getElementById('filePreviewContent');
+            if(type === 'image') {
+                content.innerHTML = `<img src="${src}" class="max-w-full max-h-full object-contain">`;
+            } else {
+                content.innerHTML = `<video src="${src}" controls autoplay class="max-w-full max-h-full"></video>`;
+            }
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        
+        function closeFilePreview() {
+            document.getElementById('filePreviewModal').classList.add('hidden');
+            document.getElementById('filePreviewModal').classList.remove('flex');
+        }
+        
+        // Lưu thông tin tài khoản ngân hàng của người mua
+        function saveBankAccount() {
+            if(!currentReturnOrderId) {
+                showToast("Không xác định được đơn hàng!", "error");
+                return;
+            }
+            
+            let bankName = document.getElementById('returnBankName').value.trim();
+            let accountNumber = document.getElementById('returnAccountNumber').value.trim();
+            let accountName = document.getElementById('returnAccountName').value.trim();
+            
+            if(!bankName || !accountNumber || !accountName) {
+                showToast("Vui lòng nhập đầy đủ thông tin tài khoản ngân hàng!", "error");
+                return;
+            }
+            
+            let order = storeData.orders.find(o => o.orderId === currentReturnOrderId);
+            if(order && order.returnRequest) {
+                order.returnRequest.bankInfo = {
+                    bankName: bankName,
+                    accountNumber: accountNumber,
+                    accountName: accountName,
+                    updatedAt: new Date().toLocaleString('vi-VN')
+                };
+                saveStoreData();
+                showToast("✅ Đã lưu thông tin tài khoản ngân hàng!", "success");
+            } else {
+                showToast("Không tìm thấy đơn hàng!", "error");
+            }
+        }
+        
+        // Xác nhận hoàn tiền
+        window.confirmRefund = function() {
+            if(!currentReturnOrderId) {
+                showToast("Không xác định được đơn hàng!", "error");
+                return;
+            }
+            
+            let order = storeData.orders.find(o => o.orderId === currentReturnOrderId);
+            
+            if(!order || !order.returnRequest) {
+                showToast("Không tìm thấy yêu cầu trả hàng!", "error");
+                return;
+            }
+            
+            let bankInfo = order.returnRequest.bankInfo;
+            if(!bankInfo) {
+                showToast("Khách hàng chưa cung cấp thông tin tài khoản ngân hàng!", "error");
+                return;
+            }
+            
+            if(confirm(`Xác nhận hoàn tiền cho đơn hàng #${currentReturnOrderId}?\n\n🏦 Ngân hàng: ${bankInfo.bankName}\n🔢 Số TK: ${bankInfo.accountNumber}\n👤 Chủ TK: ${bankInfo.accountName}\n💰 Số tiền: ${(order.subtotal || order.total || 0).toLocaleString()}đ\n\nSau khi xác nhận, vui lòng chuyển tiền vào tài khoản trên.`)) {
+                order.status = 'Đã hoàn tiền';
+                order.returnRequest.refundedAt = new Date().toLocaleString('vi-VN');
+                order.returnRequest.refundStatus = 'Đã hoàn tiền';
+                saveStoreData();
+                closeReturnRequestModal();
+                renderOrders();
+                showToast(`✅ Đã xác nhận hoàn tiền cho đơn hàng #${currentReturnOrderId}!`, "success");
+            }
+        }
+        
+        // Từ chối yêu cầu trả hàng
+        window.rejectReturnRequest = function() {
+            if(!currentReturnOrderId) {
+                showToast("Không xác định được đơn hàng!", "error");
+                return;
+            }
+            
+            let reason = prompt("Nhập lý do từ chối trả hàng:");
+            if(reason) {
+                let order = storeData.orders.find(o => o.orderId === currentReturnOrderId);
+                if(order && order.returnRequest) {
+                    order.status = 'Đã hủy';
+                    order.returnRequest.rejectedReason = reason;
+                    order.returnRequest.rejectedAt = new Date().toLocaleString('vi-VN');
+                    saveStoreData();
+                    closeReturnRequestModal();
+                    renderOrders();
+                    showToast(`Đã từ chối yêu cầu trả hàng cho đơn #${currentReturnOrderId}`, "info");
+                }
+            }
+        }
+        
+        function closeReturnRequestModal() {
+            document.getElementById('returnRequestModal').classList.add('hidden');
+            document.getElementById('returnRequestModal').classList.remove('flex');
+            currentReturnOrderId = null;
+        }
+
+        // Hàm escape HTML để tránh lỗi hiển thị
+        function escapeHtml(str) {
+            if(!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if(m === '&') return '&amp;';
+                if(m === '<') return '&lt;';
+                if(m === '>') return '&gt;';
+                return m;
+            }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+                return c;
+            });
+        }
+
+        function clearOrders() { if(confirm("Xóa lịch sử đơn hàng?")) { storeData.orders = []; saveStoreData(); calculateSoldStats(); renderProducts(); renderCombos(); renderOrders(); renderStockSummary(); showToast("Đã xóa", "info"); } }
+
+        function copyStoreLink() { 
+            let link = `${window.location.origin}/store.html?store=${currentStore.storeId}`; 
+            navigator.clipboard.writeText(link); 
+            showToast("Đã sao chép link cửa hàng!", "success"); 
+        }
+        
+        function logout() { localStorage.removeItem('currentUser'); window.location.href = 'index.html'; }
+        
+        function showTab(tab) {
+            document.getElementById('productsTab').classList.add('hidden');
+            document.getElementById('combosTab').classList.add('hidden');
+            document.getElementById('inventoryTab').classList.add('hidden');
+            document.getElementById('ordersTab').classList.add('hidden');
+            if(tab === 'products') document.getElementById('productsTab').classList.remove('hidden');
+            if(tab === 'combos') document.getElementById('combosTab').classList.remove('hidden');
+            if(tab === 'inventory') document.getElementById('inventoryTab').classList.remove('hidden');
+            if(tab === 'orders') document.getElementById('ordersTab').classList.remove('hidden');
+            
+            let tabs = ['products', 'combos', 'inventory', 'orders'];
+            tabs.forEach(t => { 
+                let btn = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`);
+                if(btn) btn.className = t === tab ? 'px-5 py-2 rounded-full font-semibold bg-indigo-600 text-white' : 'px-5 py-2 rounded-full font-semibold bg-white text-slate-700 border';
+            });
+            if(tab === 'inventory') renderStockSummary();
+        }
+
+        function showToast(msg, type) { 
+            let toast = document.createElement('div'); 
+            toast.className = `toast shadow-lg border-l-4 ${type === 'success' ? 'border-green-500' : 'border-red-500'} p-3 rounded-xl text-sm z-[1000]`; 
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle text-green-500' : 'fa-exclamation-circle text-red-500'} mr-2"></i>${msg}`; 
+            document.getElementById('toastContainer').appendChild(toast); 
+            setTimeout(() => toast.remove(), 3000); 
+        }
+
+        init();
+
+        function refreshAll() {
+            location.reload();
+        }
+
+    </script>
+
+        <!-- MODAL XEM YÊU CẦU TRẢ HÀNG -->
+    <div id="returnRequestModal" class="fixed inset-0 z-[2000] hidden items-center justify-center modal-overlay" onclick="closeReturnRequestModal(event)">
+        <div class="bg-white rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+            <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-orange-600"><i class="fas fa-undo-alt"></i> Xử lý yêu cầu trả hàng</h2>
+                <button onclick="closeReturnRequestModal()" class="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <div class="p-6 space-y-5">
+                <!-- Thông tin đơn hàng -->
+                <div class="bg-slate-50 rounded-xl p-4">
+                    <h3 class="font-semibold mb-2">📋 Thông tin đơn hàng</h3>
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <div><span class="text-slate-500">Mã đơn:</span> <span class="font-medium" id="returnRequestOrderId"></span></div>
+                        <div><span class="text-slate-500">Ngày đặt:</span> <span id="returnRequestDate"></span></div>
+                        <div><span class="text-slate-500">Khách hàng:</span> <span id="returnRequestCustomerName"></span></div>
+                        <div><span class="text-slate-500">SĐT:</span> <span id="returnRequestCustomerPhone"></span></div>
+                        <div class="col-span-2"><span class="text-slate-500">Địa chỉ:</span> <span id="returnRequestCustomerAddress"></span></div>
+                        <div><span class="text-slate-500">Tổng tiền:</span> <span class="font-bold text-emerald-600" id="returnRequestTotal"></span>đ</div>
+                    </div>
+                </div>
+                
+                <!-- 👇 THÊM DÒNG NÀY 👇 -->
+                <input type="hidden" id="returnRequestOrderIdHidden" value="">
+
+                <!-- Lý do trả hàng -->
+                <div class="bg-red-50 rounded-xl p-4">
+                    <h3 class="font-semibold mb-2 text-red-700">⚠️ Lý do trả hàng</h3>
+                    <div class="text-sm"><span class="font-medium">Lý do:</span> <span id="returnRequestReason"></span></div>
+                    <div class="text-sm mt-1"><span class="font-medium">Mô tả:</span> <span id="returnRequestDescription"></span></div>
+                </div>
+                
+                <!-- Ảnh/Video đính kèm -->
+                <div>
+                    <h3 class="font-semibold mb-2">📎 Ảnh/Video bóc hàng</h3>
+                    <div id="returnRequestFiles" class="flex flex-wrap gap-2"></div>
+                </div>
+                
+                <!-- Thông tin tài khoản ngân hàng của khách hàng (CHỈ XEM) -->
+                <div class="border-t pt-4">
+                    <h3 class="font-semibold mb-3 text-blue-600"><i class="fas fa-university"></i> Thông tin tài khoản hoàn tiền (khách hàng cung cấp)</h3>
+                    <div class="bg-slate-50 rounded-xl p-4 space-y-2">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs text-slate-500">Tên ngân hàng</label>
+                                <p class="font-medium text-gray-800" id="displayBankName">---</p>
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-500">Số tài khoản</label>
+                                <p class="font-medium text-gray-800" id="displayAccountNumber">---</p>
+                            </div>
+                            <div class="col-span-2">
+                                <label class="text-xs text-slate-500">Tên chủ tài khoản</label>
+                                <p class="font-medium text-gray-800" id="displayAccountName">---</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Ẩn các ô input cũ đi -->
+                    <input type="hidden" id="returnBankName" value="">
+                    <input type="hidden" id="returnAccountNumber" value="">
+                    <input type="hidden" id="returnAccountName" value="">
+                </div>
+                
+                <!-- Nút xử lý -->
+                <div class="flex gap-3 pt-2 border-t">
+                    <button onclick="confirmRefund()" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-semibold"><i class="fas fa-money-bill-wave"></i> Xác nhận hoàn tiền</button>
+                    <button onclick="rejectReturnRequest()" class="flex-1 bg-red-500 text-white py-3 rounded-xl font-semibold"><i class="fas fa-times"></i> Từ chối trả hàng</button>
+                </div>
+                <p class="text-xs text-slate-400 text-center">Sau khi xác nhận hoàn tiền, số tiền sẽ được chuyển vào tài khoản khách hàng</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PREVIEW ẢNH/VIDEO -->
+    <div id="filePreviewModal" class="fixed inset-0 z-[2100] hidden items-center justify-center modal-overlay" onclick="closeFilePreview()">
+        <div class="bg-black/90 rounded-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-auto p-4" onclick="event.stopPropagation()">
+            <div class="flex justify-end mb-2">
+                <button onclick="closeFilePreview()" class="text-white text-2xl">&times;</button>
+            </div>
+            <div id="filePreviewContent" class="flex items-center justify-center min-h-[300px]"></div>
+        </div>
+    </div>
+
+</body>
+</html>

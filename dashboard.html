@@ -430,6 +430,23 @@
                     </div>
                 </div>
 
+                <!-- Trong modal storeModal, thêm phần này trước nút lưu -->
+                <div class="border-t pt-4">
+                    <h3 class="font-semibold mb-3 text-orange-600"><i class="fas fa-store-slash"></i> Trạng thái cửa hàng</h3>
+                    <div class="flex gap-3 mb-3">
+                        <button onclick="setStoreStatusFromModal('open')" id="modalStatusOpen" class="flex-1 bg-green-500 text-white py-2 rounded-lg text-sm hover:bg-green-600 transition">
+                            <i class="fas fa-store"></i> Mở cửa
+                        </button>
+                        <button onclick="setStoreStatusFromModal('temporary')" id="modalStatusTemp" class="flex-1 bg-yellow-500 text-white py-2 rounded-lg text-sm hover:bg-yellow-600 transition">
+                            <i class="fas fa-clock"></i> Đóng tạm thời
+                        </button>
+                        <button onclick="setStoreStatusFromModal('permanent')" id="modalStatusPerm" class="flex-1 bg-red-500 text-white py-2 rounded-lg text-sm hover:bg-red-600 transition">
+                            <i class="fas fa-ban"></i> Đóng vĩnh viễn
+                        </button>
+                    </div>
+                    <p id="storeStatusText" class="text-xs text-slate-500 text-center"></p>
+                </div>
+
                                 <!-- Nút lưu -->
                 <div class="flex gap-3 pt-4 border-t">
                     <button onclick="saveStoreInfo()" class="flex-1 bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700"><i class="fas fa-save mr-2"></i> Lưu thông tin</button>
@@ -478,16 +495,18 @@
         let currentChartLimit = 5;
 
         function init() {
-            let userStr = localStorage.getItem('currentUser');
-            if(!userStr) { window.location.href = 'register.html'; return; }
-            currentStore = JSON.parse(userStr);
-            storeId = currentStore.storeId;
-            
-            document.getElementById('storeNameDisplay').innerHTML = `<i class="fas fa-store"></i> ${currentStore.storeName}`;
-            
-            // KHÔNG gọi loadStoreInfo() ở đây nữa, sẽ gọi sau khi có dữ liệu
-            loadStoreData();
-        }
+    let userStr = localStorage.getItem('currentUser');
+    if(!userStr) { 
+        window.location.href = 'register.html'; 
+        return; 
+    }
+    currentStore = JSON.parse(userStr);
+    storeId = currentStore.storeId;
+    
+    document.getElementById('storeNameDisplay').innerHTML = `<i class="fas fa-store"></i> ${currentStore.storeName}`;
+    
+    loadStoreData();
+}
 
     function loadStoreData() {
         const storeRef = db.ref('stores/' + storeId);
@@ -545,64 +564,70 @@
     }
 
         // Load thông tin cửa hàng lên modal
-        function loadStoreInfo() {
-            // Kiểm tra storeData tồn tại trước khi dùng
-            if(!storeData) {
-                console.log("storeData chưa sẵn sàng, sẽ gọi lại sau");
-                return;
-            }
-            
-            let info = storeData.storeInfo || {};
-            document.getElementById('storeName').value = info.storeName || currentStore?.storeName || '';
-            document.getElementById('storePhone').value = info.phone || '';
-            document.getElementById('storeEmail').value = info.email || '';
-            document.getElementById('storeWebsite').value = info.website || '';
-            document.getElementById('storeAddress').value = info.address || '';
-            document.getElementById('storeFacebook').value = info.facebook || '';
-            document.getElementById('storeInstagram').value = info.instagram || '';
-            document.getElementById('storeYoutube').value = info.youtube || '';
-            document.getElementById('storeTiktok').value = info.tiktok || '';
-            document.getElementById('storeZalo').value = info.zalo || '';
-            document.getElementById('storeShopee').value = info.shopee || '';
-            document.getElementById('storeHours').value = info.hours || '';
-            document.getElementById('storeDaysOff').value = info.daysOff || '';
-            document.getElementById('storeDescription').value = info.description || '';
-            if(info.logo) document.getElementById('storeLogoPreview').src = info.logo;
-        }
+function loadStoreInfo() {
+    if(!storeData) {
+        console.log("storeData chưa sẵn sàng, sẽ gọi lại sau");
+        return;
+    }
+    
+    let info = storeData.storeInfo || {};
+    document.getElementById('storeName').value = info.storeName || currentStore?.storeName || '';
+    document.getElementById('storePhone').value = info.phone || '';
+    document.getElementById('storeEmail').value = info.email || '';
+    document.getElementById('storeWebsite').value = info.website || '';
+    document.getElementById('storeAddress').value = info.address || '';
+    document.getElementById('storeFacebook').value = info.facebook || '';
+    document.getElementById('storeInstagram').value = info.instagram || '';
+    document.getElementById('storeYoutube').value = info.youtube || '';
+    document.getElementById('storeTiktok').value = info.tiktok || '';
+    document.getElementById('storeZalo').value = info.zalo || '';
+    document.getElementById('storeShopee').value = info.shopee || '';
+    document.getElementById('storeHours').value = info.hours || '';
+    document.getElementById('storeDaysOff').value = info.daysOff || '';
+    document.getElementById('storeDescription').value = info.description || '';
+    if(info.logo) document.getElementById('storeLogoPreview').src = info.logo;
+    
+    // THÊM DÒNG NÀY: Cập nhật giao diện nút trạng thái
+    updateStoreStatusInModal();
+}
 
         // Lưu thông tin cửa hàng
             function saveStoreInfo() {
-                if(!storeData) {
-                    showToast("Dữ liệu chưa sẵn sàng!", "error");
-                    return;
-                }
-                
-                storeData.storeInfo = {
-                    storeName: document.getElementById('storeName').value,
-                    phone: document.getElementById('storePhone').value,
-                    email: document.getElementById('storeEmail').value,
-                    website: document.getElementById('storeWebsite').value,
-                    address: document.getElementById('storeAddress').value,
-                    facebook: document.getElementById('storeFacebook').value,
-                    instagram: document.getElementById('storeInstagram').value,
-                    youtube: document.getElementById('storeYoutube').value,
-                    tiktok: document.getElementById('storeTiktok').value,
-                    zalo: document.getElementById('storeZalo').value,
-                    shopee: document.getElementById('storeShopee').value,
-                    hours: document.getElementById('storeHours').value,
-                    daysOff: document.getElementById('storeDaysOff').value,
-                    description: document.getElementById('storeDescription').value,
-                    logo: document.getElementById('storeLogoPreview').src,
-                    bankInfo: {
-                        bankName: document.getElementById('bankName').value,
-                        accountNumber: document.getElementById('bankAccountNumber').value,
-                        accountName: document.getElementById('bankAccountName').value
-                    }
-                };
-                saveStoreData();
-                closeStoreModal();
-                showToast("✅ Đã lưu thông tin cửa hàng!", "success");
-            }
+    if(!storeData) {
+        showToast("Dữ liệu chưa sẵn sàng!", "error");
+        return;
+    }
+    
+    // Lấy trạng thái hiện tại từ storeData (giữ nguyên nếu có)
+    const currentStatus = storeData.storeInfo?.status || 'open';
+    
+    storeData.storeInfo = {
+        storeName: document.getElementById('storeName').value,
+        phone: document.getElementById('storePhone').value,
+        email: document.getElementById('storeEmail').value,
+        website: document.getElementById('storeWebsite').value,
+        address: document.getElementById('storeAddress').value,
+        facebook: document.getElementById('storeFacebook').value,
+        instagram: document.getElementById('storeInstagram').value,
+        youtube: document.getElementById('storeYoutube').value,
+        tiktok: document.getElementById('storeTiktok').value,
+        zalo: document.getElementById('storeZalo').value,
+        shopee: document.getElementById('storeShopee').value,
+        hours: document.getElementById('storeHours').value,
+        daysOff: document.getElementById('storeDaysOff').value,
+        description: document.getElementById('storeDescription').value,
+        logo: document.getElementById('storeLogoPreview').src,
+        status: currentStatus, // ← QUAN TRỌNG: Giữ nguyên trạng thái
+        bankInfo: {
+            bankName: document.getElementById('bankName').value,
+            accountNumber: document.getElementById('bankAccountNumber').value,
+            accountName: document.getElementById('bankAccountName').value
+        }
+    };
+    saveStoreData();
+    closeStoreModal();
+    showToast("✅ Đã lưu thông tin cửa hàng!", "success");
+}
 
 function renderChart(productsData, combosData, type = 'product', limit = 5) {
     let items = [];
@@ -2566,6 +2591,81 @@ window.updateOrderStatus = function(orderId, newStatus) {
             currentAttributes = [];
             renderAttributesList();
         }
+
+        // ==================== ĐÓNG / MỞ CỬA HÀNG ====================
+async function setStoreStatusFromModal(status) {
+    if (!storeData) return;
+    
+    let statusText = '';
+    
+    if (status === 'open') {
+        statusText = 'Đang mở';
+    } else if (status === 'temporary') {
+        statusText = 'Tạm đóng';
+    } else if (status === 'permanent') {
+        statusText = 'Đã đóng vĩnh viễn';
+    }
+    
+    if (confirm(`Bạn có chắc chắn muốn chuyển trạng thái cửa hàng thành "${statusText}"?`)) {
+        storeData.storeInfo.status = status;
+        storeData.storeInfo.statusUpdatedAt = new Date().toLocaleString('vi-VN');
+        
+        await saveStoreData(); // ← Thêm await
+        
+        updateStoreStatusInModal();
+        showToast(`✅ Đã chuyển trạng thái cửa hàng: ${statusText}`, "success");
+    }
+}
+
+function updateStoreStatusInModal() {
+    let status = storeData?.storeInfo?.status || 'open';
+    let statusText = document.getElementById('storeStatusText');
+    
+    // Cập nhật style các nút
+    let btnOpen = document.getElementById('modalStatusOpen');
+    let btnTemp = document.getElementById('modalStatusTemp');
+    let btnPerm = document.getElementById('modalStatusPerm');
+    
+    // Reset all buttons
+    [btnOpen, btnTemp, btnPerm].forEach(btn => {
+        if (btn) {
+            btn.classList.remove('ring-2', 'ring-offset-2', 'ring-green-500', 'ring-yellow-500', 'ring-red-500', 'opacity-100');
+            btn.classList.add('opacity-70');
+        }
+    });
+    
+    if (status === 'open') {
+        if (btnOpen) {
+            btnOpen.classList.add('ring-2', 'ring-offset-2', 'ring-green-500', 'opacity-100');
+            btnOpen.classList.remove('opacity-70');
+        }
+        if (statusText) statusText.innerHTML = '📌 Trạng thái hiện tại: <span class="font-semibold text-green-600">Đang mở</span>';
+    } else if (status === 'temporary') {
+        if (btnTemp) {
+            btnTemp.classList.add('ring-2', 'ring-offset-2', 'ring-yellow-500', 'opacity-100');
+            btnTemp.classList.remove('opacity-70');
+        }
+        if (statusText) statusText.innerHTML = '📌 Trạng thái hiện tại: <span class="font-semibold text-yellow-600">Tạm đóng</span>';
+    } else if (status === 'permanent') {
+        if (btnPerm) {
+            btnPerm.classList.add('ring-2', 'ring-offset-2', 'ring-red-500', 'opacity-100');
+            btnPerm.classList.remove('opacity-70');
+        }
+        if (statusText) statusText.innerHTML = '📌 Trạng thái hiện tại: <span class="font-semibold text-red-600">Đã đóng vĩnh viễn</span>';
+    }
+}
+
+// Gọi updateStoreStatusInModal() trong loadStoreInfo() hoặc loadStoreData()
+
+// Đóng modal quản lý cửa hàng
+window.closeStoreModal = function(event) {
+    // Nếu event.target không phải là modal overlay thì không làm gì
+    if (event && event.target !== document.getElementById('storeModal')) {
+        return;
+    }
+    document.getElementById('storeModal').classList.add('hidden');
+    document.getElementById('storeModal').classList.remove('flex');
+}
 
     </script>
 

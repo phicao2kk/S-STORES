@@ -1,44 +1,56 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <!-- Firebase App (the core Firebase SDK) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <!-- Firebase Realtime Database -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <!-- Firebase Storage (để lưu ảnh thay vì Base64) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
-
-    <script>
-    // Cấu hình Firebase của bạn
-    const firebaseConfig = {
-        apiKey: "AIzaSyDbzHvxBT1mGGIrda2b_JxinZrFTxHM3Hc",
-        authDomain: "fir-s-stores-2007.firebaseapp.com",
-        databaseURL: "https://fir-s-stores-2007-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "fir-s-stores-2007",
-        storageBucket: "fir-s-stores-2007.firebasestorage.app",
-        messagingSenderId: "325985274783",
-        appId: "1:325985274783:web:9601cc0ef9b3ee503ecbaa",
-        measurementId: "G-YH3DV15NT7"
-    };
-
-    // Khởi tạo Firebase
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-    const db = firebase.database();
-    const storage = firebase.storage();
-    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng ký - S-STORES</title>
+    <title>Đăng ký / Đăng nhập - S-STORES</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        .password-wrapper {
+            position: relative;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #9ca3af;
+            transition: color 0.2s;
+        }
+        .toggle-password:hover {
+            color: #6366f1;
+        }
+    </style>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbzHvxBT1mGGIrda2b_JxinZrFTxHM3Hc",
+            authDomain: "fir-s-stores-2007.firebaseapp.com",
+            databaseURL: "https://fir-s-stores-2007-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "fir-s-stores-2007",
+            storageBucket: "fir-s-stores-2007.firebasestorage.app",
+            messagingSenderId: "325985274783",
+            appId: "1:325985274783:web:9601cc0ef9b3ee503ecbaa"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+    </script>
 </head>
 <body class="bg-gradient-to-br from-indigo-50 to-sky-100 min-h-screen flex items-center justify-center p-4">
     <div class="max-w-md w-full">
         <div class="text-center mb-8">
             <a href="index.html" class="text-3xl font-bold text-indigo-600">S-STORES</a>
-            <p class="text-slate-500 mt-2">Tạo cửa hàng của bạn</p>
+            <p class="text-slate-500 mt-2">Đăng ký / Đăng nhập bằng Email hoặc SĐT</p>
         </div>
 
         <div class="bg-white rounded-2xl shadow-xl p-8">
@@ -47,93 +59,262 @@
                 <button id="btnLogin" class="flex-1 py-2 font-semibold text-slate-400">Đăng nhập</button>
             </div>
 
+            <!-- ĐĂNG KÝ FORM -->
             <div id="registerForm">
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">Tên cửa hàng *</label>
-                        <input type="text" id="storeName" placeholder="VD: Coffee Shop ABC" class="w-full p-3 border rounded-xl">
-                        <p class="text-xs text-slate-400 mt-1">Link: s-stores.com/store/ten-cua-hang</p>
+                        <input type="text" id="regStoreName" placeholder="VD: Coffee Shop ABC" class="w-full p-3 border rounded-xl">
+                        <p class="text-xs text-slate-400 mt-1">Tên cửa hàng sẽ hiển thị trên link và giao diện</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">Email *</label>
-                        <input type="email" id="regEmail" placeholder="you@example.com" class="w-full p-3 border rounded-xl">
+                        <label class="block text-sm font-medium mb-1">Email hoặc Số điện thoại *</label>
+                        <input type="text" id="regUsername" placeholder="Email hoặc SĐT (VD: 0987654321 hoặc shop@email.com)" class="w-full p-3 border rounded-xl">
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Mật khẩu *</label>
-                        <input type="password" id="regPassword" placeholder="••••••••" class="w-full p-3 border rounded-xl">
+                        <div class="password-wrapper">
+                            <input type="password" id="regPassword" placeholder="••••••••" class="w-full p-3 border rounded-xl pr-10">
+                            <i class="fas fa-eye-slash toggle-password" data-target="regPassword"></i>
+                        </div>
                     </div>
-                    <button onclick="register()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold transition">Tạo cửa hàng</button>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Xác nhận mật khẩu *</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="regConfirmPassword" placeholder="••••••••" class="w-full p-3 border rounded-xl pr-10">
+                            <i class="fas fa-eye-slash toggle-password" data-target="regConfirmPassword"></i>
+                        </div>
+                    </div>
+                    <button onclick="register()" id="registerBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold transition">🚀 Tạo cửa hàng</button>
                 </div>
             </div>
 
+            <!-- ĐĂNG NHẬP FORM -->
             <div id="loginForm" class="hidden">
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium mb-1">Email</label>
-                        <input type="email" id="loginEmail" placeholder="you@example.com" class="w-full p-3 border rounded-xl">
+                        <label class="block text-sm font-medium mb-1">Email hoặc Số điện thoại</label>
+                        <input type="text" id="loginUsername" placeholder="Email hoặc SĐT" class="w-full p-3 border rounded-xl">
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Mật khẩu</label>
-                        <input type="password" id="loginPassword" placeholder="••••••••" class="w-full p-3 border rounded-xl">
+                        <div class="password-wrapper">
+                            <input type="password" id="loginPassword" placeholder="••••••••" class="w-full p-3 border rounded-xl pr-10">
+                            <i class="fas fa-eye-slash toggle-password" data-target="loginPassword"></i>
+                        </div>
                     </div>
-                    <button onclick="login()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold transition">Đăng nhập</button>
+                    <button onclick="login()" id="loginBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold transition">🔐 Đăng nhập</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        function getUsers() { return JSON.parse(localStorage.getItem('multisell_users') || '[]'); }
-        function saveUsers(users) { localStorage.setItem('multisell_users', JSON.stringify(users)); }
+        // ==================== ẨN/HIỆN MẬT KHẨU ====================
+        document.querySelectorAll('.toggle-password').forEach(icon => {
+            icon.addEventListener('click', function() {
+                let targetId = this.getAttribute('data-target');
+                let input = document.getElementById(targetId);
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    this.classList.remove('fa-eye-slash');
+                    this.classList.add('fa-eye');
+                } else {
+                    input.type = 'password';
+                    this.classList.remove('fa-eye');
+                    this.classList.add('fa-eye-slash');
+                }
+            });
+        });
+
+        // ==================== HÀM TIỆN ÍCH ====================
+        function showToast(msg, type) {
+            let toast = document.createElement('div');
+            toast.className = `fixed bottom-5 right-5 z-50 px-4 py-2 rounded-lg text-white text-sm ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} transition-opacity duration-300`;
+            toast.innerText = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
 
         function createStoreId(storeName) {
-            return storeName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+            let baseId = storeName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+            return baseId + '-' + Math.random().toString(36).substr(2, 6);
         }
 
-        function register() {
-    let storeName = document.getElementById('storeName').value.trim();
-    let email = document.getElementById('regEmail').value.trim().replace(/\./g, ','); // Firebase key không cho phép dấu chấm
-    let password = document.getElementById('regPassword').value;
+        // ==================== XỬ LÝ PHÍM ENTER ====================
+        function setupEnterListener() {
+            // Đăng ký form
+            let regInputs = ['regStoreName', 'regUsername', 'regPassword', 'regConfirmPassword'];
+            regInputs.forEach(id => {
+                let input = document.getElementById(id);
+                if (input) {
+                    input.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            register();
+                        }
+                    });
+                }
+            });
 
-    if(!storeName || !email || !password) { alert("Nhập đủ thông tin!"); return; }
-    let storeId = createStoreId(storeName);
-
-    // Kiểm tra cửa hàng đã tồn tại chưa
-    db.ref('users/' + email).once('value', (snapshot) => {
-        if (snapshot.exists()) {
-            alert("Email đã được đăng ký!");
-        } else {
-            // Lưu thông tin user và khởi tạo store
-            let userData = { storeName, storeId, email, password };
-            db.ref('users/' + email).set(userData);
-            db.ref('stores/' + storeId).set({
-                products: [],
-                combos: [],
-                orders: [],
-                storeInfo: { storeName: storeName }
-            }).then(() => {
-                alert("Đăng ký thành công!");
-                document.getElementById('btnLogin').click();
+            // Đăng nhập form
+            let loginInputs = ['loginUsername', 'loginPassword'];
+            loginInputs.forEach(id => {
+                let input = document.getElementById(id);
+                if (input) {
+                    input.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            login();
+                        }
+                    });
+                }
             });
         }
-    });
-}
 
-function login() {
-    let email = document.getElementById('loginEmail').value.trim().replace(/\./g, ',');
-    let password = document.getElementById('loginPassword').value;
+        // ==================== ĐĂNG KÝ ====================
+        async function register() {
+            let storeName = document.getElementById('regStoreName').value.trim();
+            let username = document.getElementById('regUsername').value.trim().toLowerCase();
+            let password = document.getElementById('regPassword').value;
+            let confirmPassword = document.getElementById('regConfirmPassword').value;
 
-    db.ref('users/' + email).once('value', (snapshot) => {
-        let user = snapshot.val();
-        if(user && user.password === password) {
-            localStorage.setItem('currentUser', JSON.stringify(user));
-            window.location.href = 'dashboard.html?store=' + user.storeId;
-        } else {
-            alert("Sai email hoặc mật khẩu!");
+            if (!storeName) {
+                showToast("Vui lòng nhập tên cửa hàng!", "error");
+                return;
+            }
+            if (!username) {
+                showToast("Vui lòng nhập email hoặc số điện thoại!", "error");
+                return;
+            }
+            if (!password) {
+                showToast("Vui lòng nhập mật khẩu!", "error");
+                return;
+            }
+            if (password !== confirmPassword) {
+                showToast("Mật khẩu xác nhận không khớp!", "error");
+                return;
+            }
+            if (password.length < 6) {
+                showToast("Mật khẩu phải có ít nhất 6 ký tự!", "error");
+                return;
+            }
+
+            try {
+                const snapshot = await db.ref('users').once('value');
+                let users = snapshot.val() || {};
+
+                let existingUser = null;
+                for (let key in users) {
+                    if (users[key].username === username) {
+                        existingUser = users[key];
+                        break;
+                    }
+                }
+
+                if (existingUser) {
+                    showToast("Email hoặc số điện thoại đã được đăng ký!", "error");
+                    return;
+                }
+
+                let storeId = createStoreId(storeName);
+                let userId = Date.now().toString();
+                let newUser = {
+                    userId: userId,
+                    storeId: storeId,
+                    storeName: storeName,
+                    username: username,
+                    password: password,
+                    createdAt: new Date().toLocaleString('vi-VN')
+                };
+
+                await db.ref('users/' + userId).set(newUser);
+
+                let storeData = {
+                    products: [],
+                    combos: [],
+                    orders: [],
+                    importHistory: [],
+                    storeInfo: {
+                        storeName: storeName,
+                        phone: "",
+                        email: "",
+                        address: "",
+                        description: ""
+                    }
+                };
+                await db.ref('stores/' + storeId).set(storeData);
+
+                showToast("✅ Đăng ký thành công! Vui lòng đăng nhập.", "success");
+                
+                document.getElementById('registerForm').classList.add('hidden');
+                document.getElementById('loginForm').classList.remove('hidden');
+                document.getElementById('btnRegister').classList.remove('text-indigo-600', 'border-indigo-600');
+                document.getElementById('btnRegister').classList.add('text-slate-400');
+                document.getElementById('btnLogin').classList.add('text-indigo-600', 'border-indigo-600');
+                document.getElementById('btnLogin').classList.remove('text-slate-400');
+                
+                document.getElementById('regStoreName').value = '';
+                document.getElementById('regUsername').value = '';
+                document.getElementById('regPassword').value = '';
+                document.getElementById('regConfirmPassword').value = '';
+
+            } catch (error) {
+                console.error("Lỗi đăng ký:", error);
+                showToast("Lỗi kết nối, vui lòng thử lại!", "error");
+            }
         }
-    });
-}
 
+        // ==================== ĐĂNG NHẬP ====================
+        async function login() {
+            let username = document.getElementById('loginUsername').value.trim().toLowerCase();
+            let password = document.getElementById('loginPassword').value;
+
+            if (!username) {
+                showToast("Vui lòng nhập email hoặc số điện thoại!", "error");
+                return;
+            }
+            if (!password) {
+                showToast("Vui lòng nhập mật khẩu!", "error");
+                return;
+            }
+
+            try {
+                const snapshot = await db.ref('users').once('value');
+                let users = snapshot.val() || {};
+
+                let foundUser = null;
+                for (let key in users) {
+                    if (users[key].username === username && users[key].password === password) {
+                        foundUser = users[key];
+                        break;
+                    }
+                }
+
+                if (foundUser) {
+                    let loginData = {
+                        userId: foundUser.userId,
+                        storeId: foundUser.storeId,
+                        storeName: foundUser.storeName,
+                        username: foundUser.username,
+                        loginAt: new Date().toLocaleString('vi-VN')
+                    };
+                    localStorage.setItem('currentUser', JSON.stringify(loginData));
+                    
+                    showToast("🎉 Đăng nhập thành công! Đang chuyển hướng...", "success");
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html?store=' + foundUser.storeId;
+                    }, 1000);
+                } else {
+                    showToast("Sai email/số điện thoại hoặc mật khẩu!", "error");
+                }
+            } catch (error) {
+                console.error("Lỗi đăng nhập:", error);
+                showToast("Lỗi kết nối, vui lòng thử lại!", "error");
+            }
+        }
+
+        // ==================== CHUYỂN TAB ====================
         document.getElementById('btnRegister').onclick = () => {
             document.getElementById('registerForm').classList.remove('hidden');
             document.getElementById('loginForm').classList.add('hidden');
@@ -142,6 +323,7 @@ function login() {
             document.getElementById('btnLogin').classList.remove('text-indigo-600', 'border-indigo-600');
             document.getElementById('btnLogin').classList.add('text-slate-400');
         };
+        
         document.getElementById('btnLogin').onclick = () => {
             document.getElementById('registerForm').classList.add('hidden');
             document.getElementById('loginForm').classList.remove('hidden');
@@ -150,6 +332,9 @@ function login() {
             document.getElementById('btnRegister').classList.remove('text-indigo-600', 'border-indigo-600');
             document.getElementById('btnRegister').classList.add('text-slate-400');
         };
+
+        // Khởi tạo sự kiện Enter
+        setupEnterListener();
     </script>
 </body>
 </html>

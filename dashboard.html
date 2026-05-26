@@ -5,8 +5,6 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <!-- Firebase Realtime Database -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<!-- Firebase Storage (để lưu ảnh thay vì Base64) -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
 <script>
   // Cấu hình Firebase của bạn
@@ -15,7 +13,6 @@
     authDomain: "fir-s-stores-2007.firebaseapp.com",
     databaseURL: "https://fir-s-stores-2007-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "fir-s-stores-2007",
-    storageBucket: "fir-s-stores-2007.firebasestorage.app",
     messagingSenderId: "325985274783",
     appId: "1:325985274783:web:9601cc0ef9b3ee503ecbaa",
     measurementId: "G-YH3DV15NT7"
@@ -26,7 +23,6 @@
     firebase.initializeApp(firebaseConfig);
   }
   const db = firebase.database();
-  const storage = firebase.storage();
 </script>
 
     <meta charset="UTF-8">
@@ -61,6 +57,61 @@
         .combo-only-item .remove-btn { color: #f59e0b; }
         .flavor-badge { background: #e0e7ff; color: #4338ca; padding: 2px 8px; border-radius: 20px; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
         .combo-flavor-select { background: #f3f4f6; border-radius: 6px; padding: 4px 8px; font-size: 12px; width: 100%; max-width: 120px; }
+        .attribute-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+        .attribute-tag { background: #e0e7ff; color: #4338ca; padding: 4px 10px; border-radius: 20px; font-size: 11px; display: inline-flex; align-items: center; gap: 6px; margin: 2px; }
+        .admin-table td {
+            vertical-align: middle;
+            padding: 10px 8px;
+        }
+        .admin-table th {
+            padding: 10px 8px;
+            white-space: nowrap;
+        }
+        .badge-danger, .badge-warning, .badge-success, .badge-info {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .inline-flex {
+            display: inline-flex;
+            align-items: center;
+        }
+        .hover\:bg-slate-50:hover {
+            background-color: #f8fafc;
+        }
+        .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.admin-table th, 
+.admin-table td {
+    padding: 10px 8px;
+    vertical-align: middle;
+    border-bottom: 1px solid #e2e8f0;
+}
+.admin-table th {
+    background-color: #f8fafc;
+    font-weight: 600;
+    color: #1e293b;
+    position: sticky;
+    top: 0;
+    white-space: nowrap;
+}
+.admin-table td {
+    word-break: break-word;
+}
+.table-container {
+    overflow-x: auto;
+    max-height: 600px;
+    overflow-y: auto;
+    border-radius: 12px;
+}
+#chartContainer::-webkit-scrollbar { width: 6px; }
+#chartContainer::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+#chartContainer::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-slate-100">
@@ -103,7 +154,14 @@
                             <div id="uploadPlaceholder"><i class="fas fa-cloud-upload-alt text-2xl text-slate-400"></i><p class="text-sm">Click để upload ảnh</p></div>
                             <div id="previewContainer" class="hidden mt-2"><img id="imagePreview" class="image-preview mx-auto"><button onclick="clearImage()" class="text-xs text-red-500 mt-1">Xóa</button></div>
                         </div>
-                        <input type="text" id="prodFlavor" placeholder="Vị (VD: Cam, Dâu)" class="w-full p-2 border rounded-lg">
+                        <div id="attributesContainer" class="border rounded-lg p-3 bg-slate-50">
+                            <label class="font-semibold text-sm block mb-2">📋 Thuộc tính phân loại</label>
+                            <div id="attributesList" class="space-y-2"></div>
+                            <button type="button" onclick="addAttribute()" class="mt-2 text-sm text-blue-500 hover:text-blue-600">
+                                <i class="fas fa-plus"></i> Thêm thuộc tính (VD: Màu sắc, Size, Dung lượng)
+                            </button>
+                            <p class="text-xs text-slate-400 mt-2">Ví dụ: Màu sắc: Đỏ, Xanh, Vàng | Size: S, M, L, XL</p>
+                        </div>
                         <input type="number" id="prodStock" placeholder="Tồn kho" class="w-full p-2 border rounded-lg" value=" ">
                         <button id="submitProductBtn" onclick="submitProduct()" class="w-full bg-indigo-600 text-white py-2 rounded-xl font-semibold">➕ Thêm sản phẩm</button>
                         <button id="cancelEditBtn" onclick="cancelEdit()" class="w-full bg-gray-300 text-gray-700 py-2 rounded-xl font-semibold hidden">✖️ Hủy chỉnh sửa</button>
@@ -115,7 +173,20 @@
                     <div class="table-container">
                         <table class="admin-table">
                             <thead>
-                                <tr><th style="width: 70px;">Ảnh</th><th>Tên sản phẩm</th><th>Loại</th><th style="width: 100px;">Giá nhập</th><th style="width: 100px;">Giá bán</th><th style="width: 80px;">Lời</th><th style="width: 80px;">Tồn</th><th style="width: 100px;">Đã nhập</th><th style="width: 100px;">Đã bán</th><th style="width: 100px;">Cần nhập</th><th>Vị</th><th style="width: 80px;">Thao tác</th>
+                                <tr class="bg-slate-100 border-b">
+                                    <th class="text-left py-2 px-2 text-xs font-semibold">Ảnh</th>
+                                    <th class="text-left py-2 px-2 text-xs font-semibold">Tên SP</th>
+                                    <th class="text-left py-2 px-2 text-xs font-semibold">Loại</th>
+                                    <th class="text-right py-2 px-2 text-xs font-semibold">Giá nhập</th>
+                                    <th class="text-right py-2 px-2 text-xs font-semibold">Giá bán</th>
+                                    <th class="text-right py-2 px-2 text-xs font-semibold">Lời</th>
+                                    <th class="text-center py-2 px-2 text-xs font-semibold">Tồn</th>
+                                    <th class="text-center py-2 px-2 text-xs font-semibold">Đã nhập</th>
+                                    <th class="text-center py-2 px-2 text-xs font-semibold">Đã bán</th>
+                                    <th class="text-center py-2 px-2 text-xs font-semibold">Cần nhập</th>
+                                    <th class="text-left py-2 px-2 text-xs font-semibold" style="min-width: 180px;">Thuộc tính</th>
+                                    <th class="text-center py-2 px-2 text-xs font-semibold">Thao tác</th>
+                                <tr>
                             </thead>
                             <tbody id="productList"></tbody>
                         </table>
@@ -247,7 +318,6 @@
                 </div>
             </div>
         </div>
-    </div>
 
     <!-- MODAL QUẢN LÝ CỬA HÀNG -->
     <div id="storeModal" class="fixed inset-0 z-[2000] hidden items-center justify-center modal-overlay">
@@ -369,81 +439,121 @@
         </div>
     </div>
 
+            <!-- ========== TOP SẢN PHẨM BÁN CHẠY - ĐẶT Ở DƯỚI CÙNG ========== -->
+        <div class="bg-white rounded-2xl shadow-md p-4 mt-6">
+            <div class="flex justify-between items-center mb-4 flex-wrap gap-3 border-b pb-3">
+                <h3 class="font-bold text-lg text-indigo-600">
+                    <i class="fas fa-trophy text-yellow-500"></i> TOP SẢN PHẨM BÁN CHẠY
+                </h3>
+                <div class="flex gap-2">
+                    <select id="chartType" onchange="updateChart()" class="text-sm border rounded-lg px-3 py-1.5 bg-gray-50">
+                        <option value="product">📦 Sản phẩm</option>
+                        <option value="combo">🎁 Combo</option>
+                        <option value="all">📊 Tất cả</option>
+                    </select>
+                    <select id="chartLimit" onchange="updateChart()" class="text-sm border rounded-lg px-3 py-1.5 bg-gray-50">
+                        <option value="5">🏆 Top 5</option>
+                        <option value="10">🏆 Top 10</option>
+                    </select>
+                </div>
+            </div>
+            <div id="chartContainer" class="space-y-3 max-h-[400px] overflow-y-auto pr-2"></div>
+        </div>
+        <!-- ========== KẾT THÚC BIỂU ĐỒ ========== -->
+    </div>
     <div id="toastContainer"></div>
 
     <script>
         let currentStore = null;
         let storeData = null;
+        let storeId = null;  // <=== THÊM DÒNG NÀY
         let tempImage = "";
         let editingProductId = null;
         let editingComboId = null;
         let tempComboImage = "";
         let currentReturnOrderId = null;
         let isReloading = false;
+        let currentAttributes = [];  // <=== DI CHUYỂN LÊN ĐẦu
+        let currentChartType = 'product';
+        let currentChartLimit = 5;
 
         function init() {
             let userStr = localStorage.getItem('currentUser');
             if(!userStr) { window.location.href = 'register.html'; return; }
             currentStore = JSON.parse(userStr);
+            storeId = currentStore.storeId;
+            
             document.getElementById('storeNameDisplay').innerHTML = `<i class="fas fa-store"></i> ${currentStore.storeName}`;
+            
+            // KHÔNG gọi loadStoreInfo() ở đây nữa, sẽ gọi sau khi có dữ liệu
             loadStoreData();
-            loadStoreInfo();
         }
 
     function loadStoreData() {
-    // 1. Tham chiếu đến dữ liệu của cửa hàng cụ thể này trên Firebase
-    const storeRef = db.ref('stores/' + storeId);
-
-    // 2. Lắng nghe dữ liệu (Realtime)
-    storeRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-
-        // Kiểm tra nếu cửa hàng không tồn tại trên Firebase
-        if (!data) {
-            document.getElementById('storeTitle').innerText = "Cửa hàng không tồn tại hoặc đã bị xóa";
-            return;
-        }
-
-        storeData = data;
-        storeInfo = storeData.storeInfo || {};
-
-        // Đảm bảo các mảng sản phẩm tồn tại để không bị lỗi code render
-        if (!storeData.products) storeData.products = [];
-        if (!storeData.combos) storeData.combos = [];
-        if (!storeData.orders) storeData.orders = [];
-
-        // 3. Lấy tên cửa hàng
-        // Lưu ý: Trên Firebase, ta nên ưu tiên lấy tên trong storeInfo đã lưu
-        currentStoreName = storeInfo.storeName || "Cửa hàng";
-
-        // 4. Cập nhật các thông tin hiển thị trên giao diện
-        document.getElementById('storeTitle').innerHTML = `<i class="fas fa-store"></i> ${currentStoreName}`;
-        document.getElementById('storeSlogan').innerText = storeInfo.description || "Mua sắm dễ dàng";
-        document.getElementById('storeNameDisplay').innerText = currentStoreName;
-        document.getElementById('storeAddressDisplay').innerText = storeInfo.address || "Đang cập nhật";
-        document.getElementById('storePhoneDisplay').innerText = storeInfo.phone || "Đang cập nhật";
-        document.getElementById('storeHoursDisplay').innerText = storeInfo.hours || "8:00 - 21:00";
-
-        if (storeInfo.logo) {
-            document.getElementById('storeLogo').src = storeInfo.logo;
-        }
-
-        // 5. Gọi các hàm hiển thị sản phẩm và giỏ hàng
-        renderProducts();
-        loadCart(); // Giỏ hàng vẫn có thể lưu ở LocalStorage của khách để họ không bị mất khi lỡ tay đóng web
-        updateCartDisplay();
+        const storeRef = db.ref('stores/' + storeId);
         
-        console.log("Cửa hàng đã sẵn sàng!");
-    }, (error) => {
-        console.error("Lỗi kết nối Firebase:", error);
-        document.getElementById('storeTitle').innerText = "Lỗi kết nối máy chủ!";
-    });
-}
+        storeRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            
+            if (!data) {
+                // Nếu chưa có dữ liệu, tạo mới
+                storeData = { 
+                    products: [], 
+                    combos: [], 
+                    orders: [], 
+                    importHistory: [], 
+                    storeInfo: {} 
+                };
+                storeRef.set(storeData);
+            } else {
+                storeData = data;
+            }
+            
+            // Đảm bảo các mảng tồn tại
+            if (!storeData.products) storeData.products = [];
+            if (!storeData.combos) storeData.combos = [];
+            if (!storeData.orders) storeData.orders = [];
+            if (!storeData.importHistory) storeData.importHistory = [];
+            if (!storeData.storeInfo) storeData.storeInfo = {};
+            
+            // Khởi tạo giá trị mặc định
+            storeData.products.forEach(p => {
+                if(p.showRetail === undefined) p.showRetail = true;
+                if(p.showCombo === undefined) p.showCombo = true;
+            });
+            
+            // ========== GỌI loadStoreInfo() SAU KHI CÓ DATA ==========
+            loadStoreInfo();
+            
+            // Render tất cả
+            calculateSoldStats();
+            renderProducts();
+            renderCombos();
+            renderOrders();
+            renderComboSelector();
+            renderImportSelect();
+            renderImportHistory();
+            renderStockSummary();
+            updateChart();
+            updateInventoryNotification();
+            
+            console.log("Đã tải dữ liệu từ Firebase!");
+        }, (error) => {
+            console.error("Lỗi kết nối Firebase:", error);
+            showToast("Không thể kết nối đến máy chủ!", "error");
+        });
+    }
 
         // Load thông tin cửa hàng lên modal
         function loadStoreInfo() {
+            // Kiểm tra storeData tồn tại trước khi dùng
+            if(!storeData) {
+                console.log("storeData chưa sẵn sàng, sẽ gọi lại sau");
+                return;
+            }
+            
             let info = storeData.storeInfo || {};
-            document.getElementById('storeName').value = info.storeName || currentStore.storeName || '';
+            document.getElementById('storeName').value = info.storeName || currentStore?.storeName || '';
             document.getElementById('storePhone').value = info.phone || '';
             document.getElementById('storeEmail').value = info.email || '';
             document.getElementById('storeWebsite').value = info.website || '';
@@ -461,47 +571,227 @@
         }
 
         // Lưu thông tin cửa hàng
-                function saveStoreInfo() {
-            storeData.storeInfo = {
-                storeName: document.getElementById('storeName').value,
-                phone: document.getElementById('storePhone').value,
-                email: document.getElementById('storeEmail').value,
-                website: document.getElementById('storeWebsite').value,
-                address: document.getElementById('storeAddress').value,
-                facebook: document.getElementById('storeFacebook').value,
-                instagram: document.getElementById('storeInstagram').value,
-                youtube: document.getElementById('storeYoutube').value,
-                tiktok: document.getElementById('storeTiktok').value,
-                zalo: document.getElementById('storeZalo').value,
-                shopee: document.getElementById('storeShopee').value,
-                hours: document.getElementById('storeHours').value,
-                daysOff: document.getElementById('storeDaysOff').value,
-                description: document.getElementById('storeDescription').value,
-                logo: document.getElementById('storeLogoPreview').src,
-                // ========== THÊM THÔNG TIN NGÂN HÀNG ==========
-                bankInfo: {
-                    bankName: document.getElementById('bankName').value,
-                    accountNumber: document.getElementById('bankAccountNumber').value,
-                    accountName: document.getElementById('bankAccountName').value
+            function saveStoreInfo() {
+                if(!storeData) {
+                    showToast("Dữ liệu chưa sẵn sàng!", "error");
+                    return;
                 }
-            };
-            saveStoreData();
-            closeStoreModal();
-            showToast("✅ Đã lưu thông tin cửa hàng!", "success");
-        }
-
-        function handleStoreLogoUpload(e) {
-            let file = e.target.files[0];
-            if(file) {
-                let reader = new FileReader();
-                reader.onload = (ev) => {
-                    document.getElementById('storeLogoPreview').src = ev.target.result;
+                
+                storeData.storeInfo = {
+                    storeName: document.getElementById('storeName').value,
+                    phone: document.getElementById('storePhone').value,
+                    email: document.getElementById('storeEmail').value,
+                    website: document.getElementById('storeWebsite').value,
+                    address: document.getElementById('storeAddress').value,
+                    facebook: document.getElementById('storeFacebook').value,
+                    instagram: document.getElementById('storeInstagram').value,
+                    youtube: document.getElementById('storeYoutube').value,
+                    tiktok: document.getElementById('storeTiktok').value,
+                    zalo: document.getElementById('storeZalo').value,
+                    shopee: document.getElementById('storeShopee').value,
+                    hours: document.getElementById('storeHours').value,
+                    daysOff: document.getElementById('storeDaysOff').value,
+                    description: document.getElementById('storeDescription').value,
+                    logo: document.getElementById('storeLogoPreview').src,
+                    bankInfo: {
+                        bankName: document.getElementById('bankName').value,
+                        accountNumber: document.getElementById('bankAccountNumber').value,
+                        accountName: document.getElementById('bankAccountName').value
+                    }
                 };
-                reader.readAsDataURL(file);
+                saveStoreData();
+                closeStoreModal();
+                showToast("✅ Đã lưu thông tin cửa hàng!", "success");
             }
-        }
+
+function renderChart(productsData, combosData, type = 'product', limit = 5) {
+    let items = [];
+    const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#22c55e', '#f97316', '#64748b'];
+    
+    if (type === 'product') {
+        // ========== LẤY SẢN PHẨM THEO TỪNG THUỘC TÍNH (VỊ) ==========
+        let productSales = [];
+        
+        productsData.forEach(p => {
+            if (!p.isComboOnly && (p.soldCount || 0) > 0) {
+                // Nếu sản phẩm có attributes (cấu trúc mới)
+                if (p.attributes && p.attributes.length > 0) {
+                    // Duyệt qua từng thuộc tính và giá trị
+                    p.attributes.forEach(attr => {
+                        attr.options.forEach(option => {
+                            let soldCount = 0;
+                            // Lấy số lượng bán từ soldByAttributes
+                            if (p.soldByAttributes && p.soldByAttributes[attr.name] && p.soldByAttributes[attr.name][option]) {
+                                soldCount = p.soldByAttributes[attr.name][option];
+                            }
+                            // Fallback: nếu có flavor cũ
+                            else if (p.soldByFlavor && p.soldByFlavor[option]) {
+                                soldCount = p.soldByFlavor[option];
+                            }
+                            
+                            if (soldCount > 0) {
+                                productSales.push({
+                                    name: `${p.name} - ${attr.name}: ${option}`,
+                                    sold: soldCount
+                                });
+                            }
+                        });
+                    });
+                } 
+                // Nếu sản phẩm có flavor cũ
+                else if (p.flavor && p.flavor.trim()) {
+                    let flavors = p.flavor.split(',').map(f => f.trim()).filter(f => f);
+                    flavors.forEach(flavor => {
+                        let soldCount = (p.soldByFlavor && p.soldByFlavor[flavor]) || 0;
+                        if (soldCount > 0) {
+                            productSales.push({
+                                name: `${p.name} - ${flavor}`,
+                                sold: soldCount
+                            });
+                        }
+                    });
+                }
+                // Sản phẩm không có thuộc tính
+                else {
+                    productSales.push({
+                        name: p.name,
+                        sold: p.soldCount || 0
+                    });
+                }
+            }
+        });
+        
+        items = productSales
+            .sort((a, b) => b.sold - a.sold)
+            .slice(0, limit)
+            .map((item, idx) => ({ name: item.name, sold: item.sold, color: colors[idx % colors.length] }));
+            
+    } else if (type === 'combo') {
+        items = combosData
+            .filter(c => (c.soldCount || 0) > 0)
+            .sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0))
+            .slice(0, limit)
+            .map((c, idx) => ({ name: `🎁 ${c.name}`, sold: c.soldCount || 0, color: colors[idx % colors.length] }));
+    } else {
+        // Tất cả: sản phẩm (theo thuộc tính) + combo
+        let allItems = [];
+        
+        // Sản phẩm theo thuộc tính
+        productsData.forEach(p => {
+            if (!p.isComboOnly && (p.soldCount || 0) > 0) {
+                if (p.attributes && p.attributes.length > 0) {
+                    p.attributes.forEach(attr => {
+                        attr.options.forEach(option => {
+                            let soldCount = (p.soldByAttributes && p.soldByAttributes[attr.name] && p.soldByAttributes[attr.name][option]) || 0;
+                            if (soldCount > 0) {
+                                allItems.push({ name: `📦 ${p.name} - ${attr.name}: ${option}`, sold: soldCount });
+                            }
+                        });
+                    });
+                } else if (p.flavor && p.flavor.trim()) {
+                    let flavors = p.flavor.split(',').map(f => f.trim()).filter(f => f);
+                    flavors.forEach(flavor => {
+                        let soldCount = (p.soldByFlavor && p.soldByFlavor[flavor]) || 0;
+                        if (soldCount > 0) {
+                            allItems.push({ name: `📦 ${p.name} - ${flavor}`, sold: soldCount });
+                        }
+                    });
+                } else {
+                    allItems.push({ name: `📦 ${p.name}`, sold: p.soldCount || 0 });
+                }
+            }
+        });
+        
+        // Combo
+        combosData.forEach(c => {
+            if ((c.soldCount || 0) > 0) {
+                allItems.push({ name: `🎁 ${c.name}`, sold: c.soldCount || 0 });
+            }
+        });
+        
+        items = allItems
+            .sort((a, b) => b.sold - a.sold)
+            .slice(0, limit)
+            .map((item, idx) => ({ name: item.name, sold: item.sold, color: colors[idx % colors.length] }));
+    }
+    
+    let container = document.getElementById('chartContainer');
+    if (items.length === 0) {
+        container.innerHTML = `<div class="text-center py-10 text-slate-400 bg-slate-50 rounded-xl"><i class="fas fa-chart-simple text-4xl mb-2 block"></i><p>📊 Chưa có dữ liệu bán hàng</p></div>`;
+        return;
+    }
+    
+    let maxSold = Math.max(...items.map(i => i.sold));
+    let html = `<div class="space-y-3"><div class="flex justify-between text-xs text-slate-500 pb-1 border-b"><span class="w-2/5">🏆 Sản phẩm</span><span class="w-2/5 text-center">📊 Tiến độ</span><span class="w-1/5 text-right">📈 Đã bán</span></div>`;
+    
+    items.forEach((item, idx) => {
+        let percent = (item.sold / maxSold) * 100;
+        let rankIcon = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : '📌'));
+        // Rút gọn tên nếu quá dài
+        let shortName = item.name.length > 30 ? item.name.substring(0, 28) + '...' : item.name;
+        
+        html += `<div class="bg-slate-50 rounded-xl p-3 hover:shadow-md transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 text-center"><span class="text-lg">${rankIcon}</span></div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="font-medium text-sm truncate max-w-[200px]" title="${escapeHtml(item.name)}">${escapeHtml(shortName)}</span>
+                                <span class="text-xs font-bold text-indigo-600">${item.sold.toLocaleString()}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                                <div class="h-full rounded-full transition-all duration-500" style="width: ${percent}%; background: ${item.color}"></div>
+                            </div>
+                            <div class="flex justify-between text-xs text-slate-400 mt-0.5">
+                                <span>Tiến độ bán</span>
+                                <span>${percent.toFixed(1)}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+    });
+    
+    let totalSold = items.reduce((sum, i) => sum + i.sold, 0);
+    html += `<div class="bg-indigo-50 rounded-xl p-3 mt-3 border border-indigo-200">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-semibold text-indigo-700"><i class="fas fa-chart-simple"></i> Tổng kết</span>
+                    <span class="text-sm font-bold text-indigo-800">${totalSold.toLocaleString()} sản phẩm</span>
+                </div>
+                <div class="flex gap-2 mt-2 text-xs text-indigo-600">
+                    <span>🎯 Top 1: ${escapeHtml(items[0]?.name.substring(0, 25) || '—')}</span>
+                </div>
+            </div></div>`;
+    container.innerHTML = html;
+}
+
+function updateChart() {
+    currentChartType = document.getElementById('chartType').value;
+    currentChartLimit = parseInt(document.getElementById('chartLimit').value);
+    renderChart(storeData.products || [], storeData.combos || [], currentChartType, currentChartLimit);
+}
+
+function handleStoreLogoUpload(e) {
+    let file = e.target.files[0];
+    if(!file) return;
+    
+    if(file.size > 5 * 1024 * 1024) {
+        showToast("Ảnh quá lớn! Vui lòng chọn ảnh dưới 5MB", "error");
+        return;
+    }
+    
+    let reader = new FileReader();
+    reader.onload = (ev) => {
+        document.getElementById('storeLogoPreview').src = ev.target.result;
+        showToast("✅ Đã chọn logo!", "success");
+    };
+    reader.readAsDataURL(file);
+}
 
         function openStoreModal() {
+            // Đảm bảo dữ liệu đã sẵn sàng
+            if(!storeData) {
+                showToast("Dữ liệu đang tải, vui lòng thử lại!", "error");
+                return;
+            }
             loadStoreInfo();
             document.getElementById('storeModal').classList.remove('hidden');
             document.getElementById('storeModal').classList.add('flex');
@@ -529,10 +819,11 @@
 function calculateSoldStats() {
     console.log("=== BẮT ĐẦU TÍNH TOÁN SOLD STATS ===");
     
-    // Reset soldCount và soldByFlavor
+    // Reset soldCount và soldByFlavor, soldByAttributes
     storeData.products.forEach(p => { 
         p.soldCount = 0;
         p.soldByFlavor = {};
+        p.soldByAttributes = {};  // THÊM DÒNG NÀY
     });
     storeData.combos.forEach(c => { c.soldCount = 0; });
     
@@ -554,16 +845,27 @@ function calculateSoldStats() {
                     product.soldCount = (product.soldCount || 0) + item.qty;
                     console.log("    -> Cộng soldCount cho", product.name, "+", item.qty, "=", product.soldCount);
                     
-                    // Lấy flavor từ nhiều nguồn khác nhau
-                    let flavor = item.flavor || item.selectedFlavor || null;
-                    console.log("    -> Flavor:", flavor);
-                    
-                    if(flavor) {
-                        if(!product.soldByFlavor) product.soldByFlavor = {};
-                        product.soldByFlavor[flavor] = (product.soldByFlavor[flavor] || 0) + item.qty;
-                        console.log("    -> soldByFlavor[", flavor, "] =", product.soldByFlavor[flavor]);
-                    } else {
-                        console.log("    -> KHÔNG CÓ FLAVOR! Sẽ không phân loại được vị");
+                    // ========== XỬ LÝ THEO THUỘC TÍNH MỚI (selectedAttrs) ==========
+                    if(item.selectedAttrs && Object.keys(item.selectedAttrs).length > 0) {
+                        // Lưu theo cấu trúc attributes
+                        for(let [attrName, attrValue] of Object.entries(item.selectedAttrs)) {
+                            if(!product.soldByAttributes[attrName]) product.soldByAttributes[attrName] = {};
+                            product.soldByAttributes[attrName][attrValue] = (product.soldByAttributes[attrName][attrValue] || 0) + item.qty;
+                            console.log(`    -> soldByAttributes[${attrName}][${attrValue}] = ${product.soldByAttributes[attrName][attrValue]}`);
+                        }
+                    }
+                    // ========== XỬ LÝ FLAVOR CŨ (tương thích ngược) ==========
+                    else {
+                        let flavor = item.flavor || item.selectedFlavor || null;
+                        console.log("    -> Flavor:", flavor);
+                        
+                        if(flavor) {
+                            if(!product.soldByFlavor) product.soldByFlavor = {};
+                            product.soldByFlavor[flavor] = (product.soldByFlavor[flavor] || 0) + item.qty;
+                            console.log("    -> soldByFlavor[", flavor, "] =", product.soldByFlavor[flavor]);
+                        } else {
+                            console.log("    -> KHÔNG CÓ THUỘC TÍNH NÀO!");
+                        }
                     }
                 }
             } else if(item.type === 'combo') {
@@ -579,13 +881,26 @@ function calculateSoldStats() {
                             let qtySold = comboItem.qty * item.qty;
                             product.soldCount = (product.soldCount || 0) + qtySold;
                             
-                            let flavor = item.selectedFlavors ? item.selectedFlavors[comboItem.productId] : null;
-                            if(!flavor) flavor = comboItem.selectedFlavor;
-                            if(!flavor) flavor = comboItem.flavor;
-                            
-                            if(flavor) {
-                                if(!product.soldByFlavor) product.soldByFlavor = {};
-                                product.soldByFlavor[flavor] = (product.soldByFlavor[flavor] || 0) + qtySold;
+                            // ========== XỬ LÝ THUỘC TÍNH TỪ COMBO ==========
+                            // Lấy từ selectedAttributes (cấu trúc mới trong combo)
+                            if(item.selectedAttributes && item.selectedAttributes[comboItem.productId]) {
+                                let attrs = item.selectedAttributes[comboItem.productId];
+                                for(let [attrName, attrValue] of Object.entries(attrs)) {
+                                    if(!product.soldByAttributes[attrName]) product.soldByAttributes[attrName] = {};
+                                    product.soldByAttributes[attrName][attrValue] = (product.soldByAttributes[attrName][attrValue] || 0) + qtySold;
+                                    console.log(`    -> (combo) soldByAttributes[${attrName}][${attrValue}] = ${product.soldByAttributes[attrName][attrValue]}`);
+                                }
+                            }
+                            // ========== XỬ LÝ FLAVOR CŨ TRONG COMBO ==========
+                            else {
+                                let flavor = item.selectedFlavors ? item.selectedFlavors[comboItem.productId] : null;
+                                if(!flavor) flavor = comboItem.selectedFlavor;
+                                if(!flavor) flavor = comboItem.flavor;
+                                
+                                if(flavor) {
+                                    if(!product.soldByFlavor) product.soldByFlavor = {};
+                                    product.soldByFlavor[flavor] = (product.soldByFlavor[flavor] || 0) + qtySold;
+                                }
                             }
                         }
                     });
@@ -597,7 +912,9 @@ function calculateSoldStats() {
     saveStoreData();
     console.log("=== KẾT THÚC TÍNH TOÁN ===");
     storeData.products.forEach(p => {
-        console.log(p.name, "- soldCount:", p.soldCount, "- soldByFlavor:", p.soldByFlavor);
+        console.log(p.name, "- soldCount:", p.soldCount);
+        console.log("  - soldByFlavor:", p.soldByFlavor);
+        console.log("  - soldByAttributes:", p.soldByAttributes);
     });
 }
 
@@ -609,8 +926,10 @@ function calculateSoldStats() {
         }
 
         function saveStoreData() { 
-            // Lưu dữ liệu lên Firebase
-            db.ref('stores/' + currentStore.storeId).set(storeData)
+            if(!storeData || !storeId) return;
+            
+            const storeRef = db.ref('stores/' + storeId);
+            storeRef.set(storeData)
             .then(() => {
                 console.log("Đã lưu lên Firebase thành công!");
             })
@@ -619,37 +938,38 @@ function calculateSoldStats() {
                 showToast("Không thể lưu dữ liệu!", "error");
             });
             
-            // Vẫn gọi các hàm render phụ để UI mượt mà (không bắt buộc vì .on đã lo việc này)
             renderImportSelect();
             renderStockSummary();
             updateInventoryNotification();
         }
 
-        async function uploadImageToFirebase(file) {
-            const ref = storage.ref(`images/${currentStore.storeId}/${Date.now()}_${file.name}`);
-            await ref.put(file);
-            return await ref.getDownloadURL();
-        }
-
         function clearImage() { tempImage = ""; document.getElementById('imageFile').value = ""; document.getElementById('uploadPlaceholder').classList.remove('hidden'); document.getElementById('previewContainer').classList.add('hidden'); }
 
                 // Xử lý upload ảnh cho combo
-         function handleComboImageUpload(event) {
-            let file = event.target.files[0];
-            if(!file) return;
-            if(!file.type.startsWith('image/')) {
-                showToast("Vui lòng chọn file ảnh", "error");
-                return;
-            }
-            let reader = new FileReader();
-            reader.onload = (ev) => {
-                tempComboImage = ev.target.result;  // <=== QUAN TRỌNG
-                document.getElementById('comboImagePreview').src = tempComboImage;
-                document.getElementById('comboUploadPlaceholder').classList.add('hidden');
-                document.getElementById('comboPreviewContainer').classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-        }
+        function handleComboImageUpload(event) {
+    let file = event.target.files[0];
+    if(!file) return;
+    
+    if(!file.type.startsWith('image/')) {
+        showToast("Vui lòng chọn file ảnh!", "error");
+        return;
+    }
+    
+    if(file.size > 500 * 1024) {
+        showToast("Ảnh quá lớn! Vui lòng chọn ảnh dưới 500KB", "error");
+        return;
+    }
+    
+    let reader = new FileReader();
+    reader.onload = (ev) => {
+        tempComboImage = ev.target.result;
+        document.getElementById('comboImagePreview').src = tempComboImage;
+        document.getElementById('comboUploadPlaceholder').classList.add('hidden');
+        document.getElementById('comboPreviewContainer').classList.remove('hidden');
+        showToast("✅ Đã chọn ảnh combo!", "success");
+    };
+    reader.readAsDataURL(file);
+}
 
         // Xóa ảnh combo
         function clearComboImage() {
@@ -669,8 +989,11 @@ function calculateSoldStats() {
             document.getElementById('prodName').value = product.name;
             document.getElementById('prodImport').value = product.importPrice;
             document.getElementById('prodPrice').value = product.salePrice;
-            document.getElementById('prodFlavor').value = product.flavor || '';
             document.getElementById('prodStock').value = product.stock;
+            
+            // Load attributes vào form
+            currentAttributes = product.attributes ? JSON.parse(JSON.stringify(product.attributes)) : [];
+            renderAttributesList();
             
             if(product.image && product.image !== "https://picsum.photos/200/150") {
                 tempImage = product.image;
@@ -694,6 +1017,7 @@ function calculateSoldStats() {
         function cancelEdit() {
             editingProductId = null;
             clearProductForm();
+            resetAttributes();  // Reset attributes
             document.getElementById('formTitle').innerHTML = '<i class="fas fa-plus text-indigo-500"></i> Thêm sản phẩm';
             let submitBtn = document.getElementById('submitProductBtn');
             submitBtn.innerHTML = '➕ Thêm sản phẩm';
@@ -718,15 +1042,17 @@ function calculateSoldStats() {
             let name = document.getElementById('prodName').value.trim();
             let importPrice = parseFloat(document.getElementById('prodImport').value) || 0;
             let salePrice = parseFloat(document.getElementById('prodPrice').value);
-            let flavor = document.getElementById('prodFlavor').value;
             let stock = parseInt(document.getElementById('prodStock').value) || 0;
             
             if(!name || isNaN(salePrice)) { showToast("Nhập đủ thông tin", "error"); return; }
             
+            // Cập nhật attributes
+            let attributes = currentAttributes.filter(a => a.name && a.name.trim() && a.options.length > 0);
+            
             product.name = name;
             product.importPrice = importPrice;
             product.salePrice = salePrice;
-            product.flavor = flavor;
+            product.attributes = attributes;
             product.stock = stock;
             if(tempImage) product.image = tempImage;
             
@@ -734,6 +1060,7 @@ function calculateSoldStats() {
             renderProducts();
             renderComboSelector();
             cancelEdit();
+            resetAttributes();
             showToast("✅ Cập nhật sản phẩm thành công!", "success");
         }
 
@@ -741,30 +1068,35 @@ function calculateSoldStats() {
             let name = document.getElementById('prodName').value.trim();
             let importPrice = parseFloat(document.getElementById('prodImport').value) || 0;
             let salePrice = parseFloat(document.getElementById('prodPrice').value);
-            let flavor = document.getElementById('prodFlavor').value;
             let stock = parseInt(document.getElementById('prodStock').value) || 0;
+            
             if(!name || isNaN(salePrice)) { showToast("Nhập đủ thông tin", "error"); return; }
+            
             let image = tempImage || "https://picsum.photos/200/150";
+            
+            // Lấy attributes (chỉ lấy những thuộc tính có tên và có options)
+            let attributes = currentAttributes.filter(a => a.name && a.name.trim() && a.options.length > 0);
+            
             storeData.products.push({ 
                 id: Date.now(), 
                 name, 
                 importPrice, 
                 salePrice, 
                 image, 
-                flavor, 
-                stock, 
+                attributes: attributes,  // Lưu attributes thay vì flavor
+                stock: stock, 
                 totalImported: stock, 
                 soldCount: 0,
-                showRetail: true,   // <=== THÊM DÒNG NÀY
-                showCombo: true     // <=== THÊM DÒNG NÀY
+                showRetail: true,
+                showCombo: true,
+                stockByAttributes: {}  // Sẽ lưu tồn kho theo tổ hợp thuộc tính
             });
-            // Đẩy lên Firebase
-            storeData.products.push(newProduct);
-            saveStoreData(); 
+            
             saveStoreData(); 
             renderProducts(); 
-            renderComboSelector();  // <=== ĐÃ CÓ
+            renderComboSelector();
             clearProductForm(); 
+            resetAttributes();  // Reset form attributes
             showToast("Thêm thành công", "success");
         }
 
@@ -772,9 +1104,9 @@ function calculateSoldStats() {
             document.getElementById('prodName').value = '';
             document.getElementById('prodImport').value = '';
             document.getElementById('prodPrice').value = '';
-            document.getElementById('prodFlavor').value = '';
             document.getElementById('prodStock').value = '0';
             clearImage();
+            resetAttributes();
         }
 
         function deleteProduct(id) {
@@ -786,48 +1118,80 @@ function calculateSoldStats() {
             }
         }
 
-        function renderProducts() {
-            let html = '';
-            // Chỉ hiển thị sản phẩm thường (không phải combo-only)
-            let normalProducts = storeData.products.filter(p => !p.isComboOnly);
-            
-            normalProducts.forEach(p => { 
-                let profit = p.salePrice - p.importPrice;
-                let sold = p.soldCount || 0;
-                let needImport = calculateNeedToImport(p);
-                let statusClass = p.stock <= 0 ? 'badge-danger' : (p.stock <= 5 ? 'badge-warning' : 'badge-success');
-                let needClass = needImport > 0 ? 'badge-danger' : 'badge-info';
-                let rowClass = p.stock <= 0 ? 'stock-zero' : '';
-                
-                html += `<tr class="${rowClass}">
-                            <td><img src="${p.image}" class="w-12 h-12 rounded object-cover"></td>
-                            <td class="font-medium">${p.name}</td>
-                            <td>
-                                <label class="inline-flex items-center mr-2">
-                                    <input type="checkbox" class="show-retail" data-id="${p.id}" ${p.showRetail !== false ? 'checked' : ''} onchange="updateProductType(${p.id}, 'retail', this.checked)">
-                                    <span class="ml-1 text-xs">🛒 Bán lẻ</span>
-                                </label>
-                                <label class="inline-flex items-center">
-                                    <input type="checkbox" class="show-combo" data-id="${p.id}" ${p.showCombo !== false ? 'checked' : ''} onchange="updateProductType(${p.id}, 'combo', this.checked)">
-                                    <span class="ml-1 text-xs">🎁 Dùng combo</span>
-                                </label>
-                            </td>
-                            <td class="text-slate-600">${p.importPrice.toLocaleString()}đ</td>
-                            <td class="text-indigo-600 font-semibold">${p.salePrice.toLocaleString()}đ</td>
-                            <td class="text-emerald-600">+${profit.toLocaleString()}đ</td>
-                            <td><span class="${statusClass}">${p.stock}</span></td>
-                            <td class="text-slate-500">${(p.totalImported || p.stock).toLocaleString()}</td>
-                            <td class="text-amber-600 font-medium">${sold.toLocaleString()}</td>
-                            <td><span class="${needClass}">${needImport > 0 ? needImport.toLocaleString() : 'Đủ'}</span></td>
-                            <td class="max-w-[150px] truncate">${p.flavor || '—'}</td>
-                            <td>
-                                <button onclick="startEditProduct(${p.id})" class="text-blue-500 mr-2"><i class="fas fa-edit"></i></button>
-                                <button onclick="deleteProduct(${p.id})" class="text-red-500"><i class="fas fa-trash"></i></button>
-                            </td>
-                           </tr>`;
+    function renderProducts() {
+    let html = '';
+    let normalProducts = storeData.products.filter(p => !p.isComboOnly);
+    
+    normalProducts.forEach(p => { 
+        let profit = p.salePrice - p.importPrice;
+        let sold = p.soldCount || 0;
+        let needImport = calculateNeedToImport(p);
+        let statusClass = p.stock <= 0 ? 'badge-danger' : (p.stock <= 5 ? 'badge-warning' : 'badge-success');
+        let needClass = needImport > 0 ? 'badge-danger' : 'badge-info';
+        let rowClass = p.stock <= 0 ? 'stock-zero' : '';
+        
+        // ========== HIỂN THỊ THUỘC TÍNH DẠNG TAG ĐẸP ==========
+        let attrsHtml = '';
+        if(p.attributes && p.attributes.length > 0) {
+            attrsHtml = `<div class="flex flex-col gap-1">`;
+            p.attributes.forEach(attr => {
+                attrsHtml += `
+                    <div class="text-xs">
+                        <span class="font-semibold text-gray-700">${escapeHtml(attr.name)}:</span>
+                        <div class="flex flex-wrap gap-1 mt-0.5">
+                            ${attr.options.map(opt => `<span class="inline-block bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full text-xs">${escapeHtml(opt)}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
             });
-            document.getElementById('productList').innerHTML = html || '<tr><td colspan="11" class="text-center py-4 text-slate-400">Chưa có sản phẩm nào</td></tr>';
+            attrsHtml += `</div>`;
+        } else {
+            attrsHtml = '<span class="text-slate-400 text-xs italic">Không có thuộc tính</span>';
         }
+        // ========== KẾT THÚC ==========
+        
+        html += `<tr class="${rowClass} hover:bg-slate-50 transition">
+                    <td class="py-2 px-2">
+                        <img src="${p.image}" class="w-10 h-10 rounded object-cover border">
+                    </td>
+                    <td class="py-2 px-2 font-medium">
+                        ${escapeHtml(p.name)}
+                        ${p.stock <= 0 ? '<span class="badge-danger ml-2 text-xs">HẾT</span>' : ''}
+                    </td>
+                    <td class="py-2 px-2">
+                        <div class="flex flex-col gap-1">
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="show-retail w-3.5 h-3.5" data-id="${p.id}" ${p.showRetail !== false ? 'checked' : ''} onchange="updateProductType(${p.id}, 'retail', this.checked)">
+                                <span class="ml-1 text-xs text-green-600"><i class="fas fa-store"></i> Bán lẻ</span>
+                            </label>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="show-combo w-3.5 h-3.5" data-id="${p.id}" ${p.showCombo !== false ? 'checked' : ''} onchange="updateProductType(${p.id}, 'combo', this.checked)">
+                                <span class="ml-1 text-xs text-amber-600"><i class="fas fa-layer-group"></i> Dùng combo</span>
+                            </label>
+                        </div>
+                    </td>
+                    <td class="py-2 px-2 text-right text-slate-600">${p.importPrice.toLocaleString()}đ</td>
+                    <td class="py-2 px-2 text-right text-indigo-600 font-semibold">${p.salePrice.toLocaleString()}đ</td>
+                    <td class="py-2 px-2 text-right ${profit >= 0 ? 'text-emerald-600' : 'text-red-500'} font-medium">${profit.toLocaleString()}đ</td>
+                    <td class="py-2 px-2 text-center"><span class="${statusClass} px-2 py-1">${p.stock}</span></td>
+                    <td class="py-2 px-2 text-center text-slate-500">${(p.totalImported || p.stock).toLocaleString()}</td>
+                    <td class="py-2 px-2 text-center text-amber-600 font-medium">${sold.toLocaleString()}</td>
+                    <td class="py-2 px-2 text-center"><span class="${needClass} px-2 py-1">${needImport > 0 ? needImport.toLocaleString() : 'Đủ'}</span></td>
+                    <td class="py-2 px-2 max-w-[200px]">${attrsHtml}</td>
+                    <td class="py-2 px-2 text-center">
+                        <div class="flex gap-1 justify-center">
+                            <button onclick="startEditProduct(${p.id})" class="text-blue-500 hover:text-blue-700 p-1" title="Sửa">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteProduct(${p.id})" class="text-red-500 hover:text-red-700 p-1" title="Xóa">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+    });
+    document.getElementById('productList').innerHTML = html || '<tr><td colspan="12" class="text-center py-4 text-slate-400">Chưa có sản phẩm nào</td></tr>';
+}
 
         function refreshComboSelector() {
             renderComboSelector();
@@ -857,11 +1221,51 @@ function calculateSoldStats() {
     let needList = [];
     
     storeData.products.forEach(p => {
-        // Nếu sản phẩm có vị
-        if(p.flavor && p.flavor.trim()) {
+        // ========== XỬ LÝ SẢN PHẨM CÓ THUỘC TÍNH (ATTRIBUTES) ==========
+        if(p.attributes && p.attributes.length > 0) {
+            // Duyệt qua từng thuộc tính của sản phẩm
+            p.attributes.forEach(attr => {
+                // Duyệt qua từng giá trị của thuộc tính
+                attr.options.forEach(option => {
+                    // Lấy số lượng đã bán theo thuộc tính + giá trị
+                    let soldCount = 0;
+                    let stockCount = 0;
+                    
+                    // Nếu có soldByAttributes (cấu trúc mới)
+                    if(p.soldByAttributes && p.soldByAttributes[attr.name] && p.soldByAttributes[attr.name][option]) {
+                        soldCount = p.soldByAttributes[attr.name][option];
+                    }
+                    // Fallback: nếu vẫn dùng soldByFlavor cũ
+                    else if(p.soldByFlavor && p.soldByFlavor[option]) {
+                        soldCount = p.soldByFlavor[option];
+                    }
+                    
+                    // Lấy tồn kho theo thuộc tính
+                    if(p.stockByAttributes && p.stockByAttributes[attr.name] && p.stockByAttributes[attr.name][option]) {
+                        stockCount = p.stockByAttributes[attr.name][option];
+                    } else if(p.stockByFlavor && p.stockByFlavor[option]) {
+                        stockCount = p.stockByFlavor[option];
+                    }
+                    
+                    let needCount = soldCount - stockCount;
+                    
+                    if(needCount > 0) {
+                        needList.push({
+                            productId: p.id,
+                            productName: p.name,
+                            attributeName: attr.name,
+                            attributeValue: option,
+                            need: needCount,
+                            sold: soldCount,
+                            stock: stockCount
+                        });
+                    }
+                });
+            });
+        }
+        // Xử lý sản phẩm có flavor (cũ) - tương thích ngược
+        else if(p.flavor && p.flavor.trim()) {
             let flavors = p.flavor.split(',').map(f => f.trim()).filter(f => f);
-            
-            // Duyệt từng vị
             flavors.forEach(flavor => {
                 let soldCount = (p.soldByFlavor && p.soldByFlavor[flavor]) || 0;
                 let stockCount = (p.stockByFlavor && p.stockByFlavor[flavor]) || 0;
@@ -871,15 +1275,17 @@ function calculateSoldStats() {
                     needList.push({
                         productId: p.id,
                         productName: p.name,
-                        flavor: flavor,
+                        attributeName: "Vị",
+                        attributeValue: flavor,
                         need: needCount,
                         sold: soldCount,
                         stock: stockCount
                     });
                 }
             });
-        } else {
-            // Sản phẩm không có vị
+        } 
+        // Sản phẩm không có thuộc tính
+        else {
             let soldCount = p.soldCount || 0;
             let stockCount = p.stock || 0;
             let needCount = soldCount - stockCount;
@@ -888,7 +1294,8 @@ function calculateSoldStats() {
                 needList.push({
                     productId: p.id,
                     productName: p.name,
-                    flavor: null,
+                    attributeName: null,
+                    attributeValue: null,
                     need: needCount,
                     sold: soldCount,
                     stock: stockCount
@@ -905,7 +1312,8 @@ function calculateSoldStats() {
                 <thead class="bg-slate-100 sticky top-0">
                     <tr class="border-b">
                         <th class="text-left py-2 px-2">📦 Sản phẩm</th>
-                        <th class="text-left py-2 px-2">🍽️ Vị</th>
+                        <th class="text-left py-2 px-2">🏷️ Thuộc tính</th>
+                        <th class="text-left py-2 px-2">🎯 Giá trị</th>
                         <th class="text-center py-2 px-2">📦 Tồn</th>
                         <th class="text-center py-2 px-2">🛒 Đã bán</th>
                         <th class="text-center py-2 px-2 text-red-600">⚠️ Cần nhập</th>
@@ -917,17 +1325,19 @@ function calculateSoldStats() {
         
         needList.forEach(item => {
             let statusIcon = item.stock === 0 ? '🔴' : (item.need > 10 ? '🟠' : '🟡');
-            let flavorDisplay = item.flavor ? `<span class="badge-info px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700">${item.flavor}</span>` : '<span class="text-slate-400">—</span>';
+            let attrDisplay = item.attributeName ? `<span class="badge-info px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700">${item.attributeName}</span>` : '<span class="text-slate-400">—</span>';
+            let valueDisplay = item.attributeValue ? `<span class="badge-warning px-2 py-1 rounded-full text-xs bg-amber-100 text-amber-700">${item.attributeValue}</span>` : '<span class="text-slate-400">—</span>';
             
             html += `
                 <tr class="border-b hover:bg-slate-50">
                     <td class="py-2 px-2 font-medium">${statusIcon} ${item.productName}</td>
-                    <td class="py-2 px-2">${flavorDisplay}</td>
+                    <td class="py-2 px-2">${attrDisplay}</td>
+                    <td class="py-2 px-2">${valueDisplay}</td>
                     <td class="py-2 px-2 text-center ${item.stock === 0 ? 'text-red-600 font-bold' : ''}">${item.stock}</td>
                     <td class="py-2 px-2 text-center font-medium">${item.sold}</td>
                     <td class="py-2 px-2 text-center text-red-600 font-bold text-base">${item.need}</td>
                     <td class="py-2 px-2 text-center">
-                        <button onclick="quickImportByFlavor('${item.productId}', '${item.flavor || ''}', ${item.need})" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs transition">
+                        <button onclick="quickImportByAttribute('${item.productId}', '${item.attributeName || ''}', '${item.attributeValue || ''}', ${item.need})" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs transition">
                             <i class="fas fa-truck"></i> Nhập ${item.need}
                         </button>
                     </td>
@@ -940,8 +1350,8 @@ function calculateSoldStats() {
         html += `
                 </tbody>
                 <tfoot class="bg-slate-100 sticky bottom-0 border-t-2">
-                    <tr>
-                        <td colspan="4" class="py-2 px-2 text-right font-bold">📊 Tổng cần nhập:</td>
+                    <tr class="border-t">
+                        <td colspan="5" class="py-2 px-2 text-right font-bold">📊 Tổng cần nhập:</td>
                         <td class="py-2 px-2 text-center font-bold text-red-600 text-lg">${totalNeed}</td>
                         <td class="py-2 px-2"></td>
                     </tr>
@@ -950,6 +1360,48 @@ function calculateSoldStats() {
         `;
     }
     document.getElementById('stockSummary').innerHTML = html;
+}
+
+function quickImportByAttribute(productId, attributeName, attributeValue, suggestedQty) {
+    console.log("quickImportByAttribute called:", {productId, attributeName, attributeValue, suggestedQty});
+    
+    let product = storeData.products.find(p => p.id == productId);
+    if(product) {
+        document.getElementById('importProductSelect').value = productId;
+        document.getElementById('importQuantity').value = suggestedQty;
+        document.getElementById('importPrice').value = product.importPrice;
+        document.getElementById('importNote').value = '';
+        
+        // Xử lý chọn thuộc tính
+        if(attributeName && attributeValue) {
+            // Kích hoạt onchange để hiện dropdown
+            let event = new Event('change');
+            document.getElementById('importProductSelect').dispatchEvent(event);
+            
+            setTimeout(() => {
+                let flavorSelect = document.getElementById('importFlavorSelect');
+                if(flavorSelect) {
+                    // Tìm và chọn đúng giá trị
+                    for(let i = 0; i < flavorSelect.options.length; i++) {
+                        if(flavorSelect.options[i].value === attributeValue) {
+                            flavorSelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+                    // Hiển thị thông báo cho người dùng biết đang nhập cho thuộc tính nào
+                    showToast(`Đã chọn ${product.name} - ${attributeName}: ${attributeValue}`, "info");
+                }
+            }, 150);
+        }
+        
+        showTab('inventory');
+        document.getElementById('importQuantity').focus();
+        document.getElementById('importQuantity').select();
+        
+        showToast(`Đã chọn ${product.name}${attributeValue ? ' - ' + attributeValue : ''}, cần nhập ${suggestedQty}`, "info");
+    } else {
+        showToast("Không tìm thấy sản phẩm!", "error");
+    }
 }
 
 function quickImportByFlavor(productId, flavor, suggestedQty) {
@@ -1038,7 +1490,6 @@ function renderImportSelect() {
     
     select.onchange = function() {
         let selected = select.options[select.selectedIndex];
-        let flavor = selected.getAttribute('data-flavor');
         let need = selected.getAttribute('data-need');
         let productId = parseInt(select.value);
         let product = storeData.products.find(p => p.id == productId);
@@ -1046,7 +1497,7 @@ function renderImportSelect() {
         // Cập nhật giá nhập
         if(product) document.getElementById('importPrice').value = product.importPrice;
         
-        // ========== SỬA: CHỈ SET SỐ LƯỢNG NẾU Ô ĐANG TRỐNG HOẶC = 0 ==========
+        // ========== CHỈ SET SỐ LƯỢNG NẾU Ô ĐANG TRỐNG ==========
         let currentQty = document.getElementById('importQuantity').value;
         if(!currentQty || currentQty == '0' || currentQty == '') {
             if(need && parseInt(need) > 0) {
@@ -1055,16 +1506,32 @@ function renderImportSelect() {
                 document.getElementById('importQuantity').value = '1';
             }
         }
-        // ========== KẾT THÚC ==========
         
-        // XỬ LÝ DROPDOWN VỊ
-        if(product && product.flavor && product.flavor.trim()) {
+        // ========== XỬ LÝ DROPDOWN THUỘC TÍNH ==========
+        if(product && product.attributes && product.attributes.length > 0) {
+            // Tạo dropdown cho tất cả các thuộc tính
+            flavorDiv.classList.remove('hidden');
+            flavorSelect.innerHTML = '<option value="">-- Chọn thuộc tính & giá trị --</option>';
+            
+            product.attributes.forEach(attr => {
+                if(attr.options && attr.options.length > 0) {
+                    // Tạo option group cho từng thuộc tính
+                    attr.options.forEach(opt => {
+                        flavorSelect.innerHTML += `<option value="${opt}" data-attr-name="${attr.name}">🍽️ ${attr.name}: ${opt}</option>`;
+                    });
+                }
+            });
+            
+            // Lưu tên thuộc tính vào data attribute của select
+            flavorSelect.setAttribute('data-current-product', productId);
+        } 
+        else if(product && product.flavor && product.flavor.trim()) {
             let flavors = product.flavor.split(',').map(f => f.trim()).filter(f => f);
             if(flavors.length > 0) {
                 flavorDiv.classList.remove('hidden');
                 flavorSelect.innerHTML = '<option value="">-- Tất cả vị (nhập chung) --</option>';
                 flavors.forEach(f => {
-                    flavorSelect.innerHTML += `<option value="${f}">🍽️ ${f}</option>`;
+                    flavorSelect.innerHTML += `<option value="${f}" data-attr-name="Vị">🍽️ Vị: ${f}</option>`;
                 });
             } else {
                 flavorDiv.classList.add('hidden');
@@ -1076,80 +1543,101 @@ function renderImportSelect() {
 }
 
     function importStock() {
-        let productId = parseInt(document.getElementById('importProductSelect').value);
-        let quantity = parseInt(document.getElementById('importQuantity').value);
-        let importPrice = parseFloat(document.getElementById('importPrice').value);
-        let note = document.getElementById('importNote').value.trim();
-        let selectedFlavor = document.getElementById('importFlavorSelect').value;
-        
-        console.log("importStock called:", {productId, quantity, importPrice, selectedFlavor});
-        
-        if(!productId || !quantity || quantity <= 0) { 
-            showToast("Chọn sản phẩm và nhập số lượng", "error"); 
-            return; 
-        }
-        
-        let product = storeData.products.find(p => p.id == productId);
-        if(!product) { 
-            showToast("Không tìm thấy sản phẩm", "error"); 
-            return; 
-        }
-        
-        let finalImportPrice = importPrice || product.importPrice;
-        let totalCost = quantity * finalImportPrice;
-        
-        // XỬ LÝ NHẬP THEO VỊ
-        if(selectedFlavor && selectedFlavor !== "") {
-            if(!product.stockByFlavor) product.stockByFlavor = {};
-            if(!product.totalImportedByFlavor) product.totalImportedByFlavor = {};
-            
-            product.stockByFlavor[selectedFlavor] = (product.stockByFlavor[selectedFlavor] || 0) + quantity;
-            product.totalImportedByFlavor[selectedFlavor] = (product.totalImportedByFlavor[selectedFlavor] || 0) + quantity;
-            
-            // Cập nhật tổng tồn kho
-            product.stock = Object.values(product.stockByFlavor).reduce((a, b) => a + b, 0);
-            product.totalImported = Object.values(product.totalImportedByFlavor).reduce((a, b) => a + b, 0);
-            
-            console.log(`Đã nhập ${quantity} cho vị ${selectedFlavor}`);
-        } else {
-            product.stock += quantity;
-            product.totalImported = (product.totalImported || 0) + quantity;
-        }
-        
-        // Cập nhật giá nhập trung bình
-        if(finalImportPrice !== product.importPrice && product.totalImported > 0) {
-            let totalValue = (product.totalImported - quantity) * product.importPrice + totalCost;
-            product.importPrice = Math.round(totalValue / product.totalImported);
-        }
-        
-        // Lưu lịch sử
-        let importRecord = {
-            id: Date.now(),
-            date: new Date().toLocaleString('vi-VN'),
-            productId: product.id,
-            productName: product.name,
-            flavor: selectedFlavor || null,
-            quantity: quantity,
-            importPrice: finalImportPrice,
-            totalCost: totalCost,
-            note: note || ''
-        };
-        if(!storeData.importHistory) storeData.importHistory = [];
-        storeData.importHistory.unshift(importRecord);
-        
-        saveStoreData();
-        renderProducts();
-        renderImportHistory();
-        renderStockSummary();
-        renderImportSelect();
-        
-        // Reset form
-        document.getElementById('importQuantity').value = '1';
-        document.getElementById('importNote').value = '';
-        document.getElementById('importFlavorSelect').value = '';
-        
-        showToast(`✅ Đã nhập ${quantity} ${product.name}${selectedFlavor ? ' (' + selectedFlavor + ')' : ''} thành công!`, "success");
+    let productId = parseInt(document.getElementById('importProductSelect').value);
+    let quantity = parseInt(document.getElementById('importQuantity').value);
+    let importPrice = parseFloat(document.getElementById('importPrice').value);
+    let note = document.getElementById('importNote').value.trim();
+    let selectedValue = document.getElementById('importFlavorSelect').value; // Tên giá trị (VD: Đỏ, Xanh)
+    let selectedAttrName = document.getElementById('importFlavorSelect').getAttribute('data-attr-name') || "Vị";
+    
+    console.log("importStock called:", {productId, quantity, importPrice, selectedAttrName, selectedValue});
+    
+    if(!productId || !quantity || quantity <= 0) { 
+        showToast("Chọn sản phẩm và nhập số lượng", "error"); 
+        return; 
     }
+    
+    let product = storeData.products.find(p => p.id == productId);
+    if(!product) { 
+        showToast("Không tìm thấy sản phẩm", "error"); 
+        return; 
+    }
+    
+    let finalImportPrice = importPrice || product.importPrice;
+    let totalCost = quantity * finalImportPrice;
+    
+    // ========== XỬ LÝ NHẬP THEO THUỘC TÍNH ==========
+    if(selectedValue && selectedValue !== "") {
+        // Khởi tạo cấu trúc lưu theo attributes
+        if(!product.stockByAttributes) product.stockByAttributes = {};
+        if(!product.stockByAttributes[selectedAttrName]) product.stockByAttributes[selectedAttrName] = {};
+        
+        // Cập nhật tồn kho theo thuộc tính
+        product.stockByAttributes[selectedAttrName][selectedValue] = (product.stockByAttributes[selectedAttrName][selectedValue] || 0) + quantity;
+        
+        // Cập nhật tổng tồn kho (tổng của tất cả các giá trị)
+        product.stock = 0;
+        for(let attrName in product.stockByAttributes) {
+            for(let val in product.stockByAttributes[attrName]) {
+                product.stock += product.stockByAttributes[attrName][val];
+            }
+        }
+        
+        // Cập nhật totalImported tương tự
+        if(!product.totalImportedByAttributes) product.totalImportedByAttributes = {};
+        if(!product.totalImportedByAttributes[selectedAttrName]) product.totalImportedByAttributes[selectedAttrName] = {};
+        product.totalImportedByAttributes[selectedAttrName][selectedValue] = (product.totalImportedByAttributes[selectedAttrName][selectedValue] || 0) + quantity;
+        
+        product.totalImported = 0;
+        for(let attrName in product.totalImportedByAttributes) {
+            for(let val in product.totalImportedByAttributes[attrName]) {
+                product.totalImported += product.totalImportedByAttributes[attrName][val];
+            }
+        }
+        
+        console.log(`Đã nhập ${quantity} cho ${product.name} - ${selectedAttrName}: ${selectedValue}`);
+    } 
+    // Xử lý nhập chung (không phân biệt thuộc tính)
+    else {
+        product.stock += quantity;
+        product.totalImported = (product.totalImported || 0) + quantity;
+    }
+    
+    // Cập nhật giá nhập trung bình
+    if(finalImportPrice !== product.importPrice && product.totalImported > 0) {
+        let totalValue = (product.totalImported - quantity) * product.importPrice + totalCost;
+        product.importPrice = Math.round(totalValue / product.totalImported);
+    }
+    
+    // Lưu lịch sử
+    let importRecord = {
+        id: Date.now(),
+        date: new Date().toLocaleString('vi-VN'),
+        productId: product.id,
+        productName: product.name,
+        attributeName: selectedAttrName || null,
+        attributeValue: selectedValue || null,
+        quantity: quantity,
+        importPrice: finalImportPrice,
+        totalCost: totalCost,
+        note: note || ''
+    };
+    if(!storeData.importHistory) storeData.importHistory = [];
+    storeData.importHistory.unshift(importRecord);
+    
+    saveStoreData();
+    renderProducts();
+    renderImportHistory();
+    renderStockSummary();
+    renderImportSelect();
+    
+    // Reset form
+    document.getElementById('importQuantity').value = '1';
+    document.getElementById('importNote').value = '';
+    document.getElementById('importFlavorSelect').value = '';
+    
+    showToast(`✅ Đã nhập ${quantity} ${product.name}${selectedValue ? ' (' + selectedAttrName + ': ' + selectedValue + ')' : ''} thành công!`, "success");
+}
 
 function renderImportHistory() {
     let html = '';
@@ -1333,7 +1821,7 @@ function renderImportHistory() {
     showToast("Đã hủy chỉnh sửa combo", "info");
 }
 
-        function createCombo() {
+function createCombo() {
     let name = document.getElementById('comboName').value.trim();
     let salePrice = parseFloat(document.getElementById('comboPrice').value);
     if(!name || isNaN(salePrice)) { showToast("Nhập tên và giá combo", "error"); return; }
@@ -1438,6 +1926,32 @@ function renderImportHistory() {
         
         showToast(`✅ Đã tạo combo "${name}" thành công!`, "success");
     }
+}
+
+function handleImageUpload(e) {
+    let file = e.target.files[0];
+    if(!file) return;
+    
+    if(!file.type.startsWith('image/')) {
+        showToast("Vui lòng chọn file ảnh!", "error");
+        return;
+    }
+    
+    // Giới hạn kích thước ảnh (500KB)
+    if(file.size > 500 * 1024) {
+        showToast("Ảnh quá lớn! Vui lòng chọn ảnh dưới 500KB", "error");
+        return;
+    }
+    
+    let reader = new FileReader();
+    reader.onload = (ev) => {
+        tempImage = ev.target.result;  // Lưu Base64
+        document.getElementById('imagePreview').src = tempImage;
+        document.getElementById('uploadPlaceholder').classList.add('hidden');
+        document.getElementById('previewContainer').classList.remove('hidden');
+        showToast("✅ Đã chọn ảnh!", "success");
+    };
+    reader.readAsDataURL(file);
 }
 
                 // Reset form tạo combo
@@ -1611,122 +2125,153 @@ window.updateOrderStatus = function(orderId, newStatus) {
 
         // Hiển thị danh sách đơn hàng
         function renderOrders() {
-            let orders = storeData.orders || [];
-            let total = 0;
-            let html = '';
+    let orders = storeData.orders || [];
+    let total = 0;
+    let html = '';
+    
+    if(orders.length === 0) {
+        document.getElementById('orderList').innerHTML = '<div class="text-center py-10 text-slate-400">📭 Chưa có đơn hàng nào</div>';
+        document.getElementById('totalRevenue').innerText = '0';
+        return;
+    }
+    
+    let sortedOrders = [...orders].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    
+    sortedOrders.forEach((o) => { 
+        let orderTotal = o.subtotal || o.total || 0;
+        total += orderTotal;
+        
+        let statusColor = '';
+        let statusText = o.status || 'Chờ xác nhận';
+        switch(statusText) {
+            case 'Chờ xác nhận': statusColor = 'bg-orange-100 text-orange-700'; break;
+            case 'Đã xác nhận': statusColor = 'bg-blue-100 text-blue-700'; break;
+            case 'Đang giao hàng': statusColor = 'bg-purple-100 text-purple-700'; break;
+            case 'Hoàn thành': statusColor = 'bg-green-100 text-green-700'; break;
+            case 'Đã hủy': statusColor = 'bg-red-100 text-red-700'; break;
+            default: statusColor = 'bg-gray-100 text-gray-700';
+        }
+        
+        let customerInfoHtml = '';
+        let customer = o.customerInfo || {};
+        
+        if(o.deliveryMethod === 'ship') {
+            customerInfoHtml = `
+                <div class="bg-blue-50 p-3 rounded-lg mt-2 text-sm">
+                    <div class="font-bold text-blue-700 mb-2"><i class="fas fa-user-circle"></i> THÔNG TIN KHÁCH HÀNG</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><i class="fas fa-user w-5"></i> Tên: <span class="font-medium">${escapeHtml(customer.name) || 'Chưa có'}</span></div>
+                        <div><i class="fas fa-phone w-5"></i> SĐT: <span class="font-medium">${escapeHtml(customer.phone) || 'Chưa có'}</span></div>
+                        <div class="col-span-2"><i class="fas fa-map-marker-alt w-5"></i> Địa chỉ: <span class="font-medium">${escapeHtml(customer.address) || 'Chưa có'}</span></div>
+                        ${customer.note ? `<div class="col-span-2"><i class="fas fa-sticky-note w-5"></i> Ghi chú: ${escapeHtml(customer.note)}</div>` : ''}
+                    </div>
+                </div>
+            `;
+        } else {
+            customerInfoHtml = `
+                <div class="bg-purple-50 p-3 rounded-lg mt-2 text-sm">
+                    <div class="font-bold text-purple-700 mb-2"><i class="fas fa-store"></i> HÌNH THỨC: ĐẾN LẤY TẠI CỬA HÀNG</div>
+                    <div><i class="fas fa-map-marker-alt w-5"></i> Địa chỉ: ${escapeHtml(storeData.storeInfo?.address) || 'Đang cập nhật'}</div>
+                    <div><i class="fas fa-phone w-5"></i> Liên hệ: ${escapeHtml(storeData.storeInfo?.phone) || 'Đang cập nhật'}</div>
+                </div>
+            `;
+        }
+        
+        // ========== XỬ LÝ HIỂN THỊ SẢN PHẨM TRONG ĐƠN HÀNG ==========
+        let itemsHtml = '';
+        o.items.forEach(item => {
+            let itemName = escapeHtml(item.name);
             
-            if(orders.length === 0) {
-                document.getElementById('orderList').innerHTML = '<div class="text-center py-10 text-slate-400">📭 Chưa có đơn hàng nào</div>';
-                document.getElementById('totalRevenue').innerText = '0';
-                return;
+            // Xử lý hiển thị thuộc tính cho sản phẩm lẻ
+            if(item.type === 'product' && item.selectedAttrs && Object.keys(item.selectedAttrs).length > 0) {
+                let attrsText = Object.entries(item.selectedAttrs).map(([key, val]) => `${key}: ${val}`).join(', ');
+                itemName = `${item.name} (${attrsText})`;
+            }
+            // Xử lý hiển thị thuộc tính cho combo
+            else if(item.type === 'combo' && item.selectedAttributes && Object.keys(item.selectedAttributes).length > 0) {
+                let attrsList = [];
+                for(let [productId, attrs] of Object.entries(item.selectedAttributes)) {
+                    if(typeof attrs === 'object') {
+                        let attrsText = Object.entries(attrs).map(([key, val]) => `${key}: ${val}`).join(', ');
+                        attrsList.push(attrsText);
+                    } else {
+                        attrsList.push(attrs);
+                    }
+                }
+                if(attrsList.length > 0) {
+                    itemName = `${item.name} [${attrsList.join(', ')}]`;
+                }
+            }
+            // Xử lý hiển thị vị cũ cho combo
+            else if(item.type === 'combo' && item.selectedFlavors && Object.keys(item.selectedFlavors).length > 0) {
+                let flavorText = Object.values(item.selectedFlavors).join(', ');
+                itemName = `${item.name} (Vị: ${flavorText})`;
             }
             
-            // Sắp xếp đơn hàng mới nhất lên đầu
-            let sortedOrders = [...orders].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-            
-            sortedOrders.forEach((o) => { 
-                let orderTotal = o.subtotal || o.total || 0;
-                total += orderTotal;
+            itemsHtml += `<div class="flex justify-between"><span>• ${itemName} x${item.qty}</span><span class="font-medium">${(item.price * item.qty).toLocaleString()}đ</span></div>`;
+        });
+        
+        let actionButtons = '';
+        if(statusText === 'Chờ xác nhận') {
+            actionButtons = `
+                <button onclick="updateOrderStatus('${o.orderId}', 'Đã xác nhận')" class="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-check"></i> Xác nhận</button>
+                <button onclick="updateOrderStatus('${o.orderId}', 'Đã hủy')" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-times"></i> Hủy đơn</button>
+            `;
+        } else if(statusText === 'Đã xác nhận') {
+            actionButtons = `
+                <button onclick="updateOrderStatus('${o.orderId}', 'Đang giao hàng')" class="bg-purple-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-truck"></i> Đang giao</button>
+                <button onclick="updateOrderStatus('${o.orderId}', 'Đã hủy')" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-times"></i> Hủy đơn</button>
+            `;
+        } else if(statusText === 'Đang giao hàng') {
+            actionButtons = `
+                <button onclick="updateOrderStatus('${o.orderId}', 'Hoàn thành')" class="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-check-circle"></i> Hoàn thành</button>
+                <button onclick="updateOrderStatus('${o.orderId}', 'Đã hủy')" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-times"></i> Hủy đơn</button>
+            `;
+        } else if(statusText === 'Yêu cầu trả hàng') {
+            actionButtons = `<button onclick="viewReturnRequest('${o.orderId}')" class="bg-orange-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-undo-alt"></i> Xử lý trả hàng</button>`;
+        } else if(statusText === 'Đã hoàn tiền') {
+            actionButtons = `<span class="text-emerald-600 text-sm"><i class="fas fa-money-bill-wave"></i> Đã hoàn tiền</span>`;
+        }
+        
+        html += `
+            <div class="border rounded-xl p-4 mb-4 bg-white shadow-sm hover:shadow-md transition">
+                <div class="flex justify-between items-start flex-wrap gap-2">
+                    <div>
+                        <span class="font-bold text-indigo-600">#${o.orderId}</span>
+                        <span class="ml-2 text-xs text-slate-400">${o.date}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold ${statusColor}">${statusText}</span>
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold ${o.deliveryMethod === 'ship' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}">
+                            ${o.deliveryMethod === 'ship' ? '🚚 Giao hàng' : '🏪 Đến lấy'}
+                        </span>
+                    </div>
+                </div>
                 
-                // Xác định màu cho trạng thái
-                let statusColor = '';
-                let statusText = o.status || 'Chờ xác nhận';
-                switch(statusText) {
-                    case 'Chờ xác nhận': statusColor = 'bg-orange-100 text-orange-700'; break;
-                    case 'Đã xác nhận': statusColor = 'bg-blue-100 text-blue-700'; break;
-                    case 'Đang giao hàng': statusColor = 'bg-purple-100 text-purple-700'; break;
-                    case 'Hoàn thành': statusColor = 'bg-green-100 text-green-700'; break;
-                    case 'Đã hủy': statusColor = 'bg-red-100 text-red-700'; break;
-                    default: statusColor = 'bg-gray-100 text-gray-700';
-                }
-                
-                // Hiển thị thông tin khách hàng
-                let customerInfoHtml = '';
-                let customer = o.customerInfo || {};
-                
-                if(o.deliveryMethod === 'ship') {
-                    customerInfoHtml = `
-                        <div class="bg-blue-50 p-3 rounded-lg mt-2 text-sm">
-                            <div class="font-bold text-blue-700 mb-2"><i class="fas fa-user-circle"></i> THÔNG TIN KHÁCH HÀNG</div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div><i class="fas fa-user w-5"></i> Tên: <span class="font-medium">${escapeHtml(customer.name) || 'Chưa có'}</span></div>
-                                <div><i class="fas fa-phone w-5"></i> SĐT: <span class="font-medium">${escapeHtml(customer.phone) || 'Chưa có'}</span></div>
-                                <div class="col-span-2"><i class="fas fa-map-marker-alt w-5"></i> Địa chỉ: <span class="font-medium">${escapeHtml(customer.address) || 'Chưa có'}</span></div>
-                                ${customer.note ? `<div class="col-span-2"><i class="fas fa-sticky-note w-5"></i> Ghi chú: ${escapeHtml(customer.note)}</div>` : ''}
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    customerInfoHtml = `
-                        <div class="bg-purple-50 p-3 rounded-lg mt-2 text-sm">
-                            <div class="font-bold text-purple-700 mb-2"><i class="fas fa-store"></i> HÌNH THỨC: ĐẾN LẤY TẠI CỬA HÀNG</div>
-                            <div><i class="fas fa-map-marker-alt w-5"></i> Địa chỉ: ${escapeHtml(storeData.storeInfo?.address) || 'Đang cập nhật'}</div>
-                            <div><i class="fas fa-phone w-5"></i> Liên hệ: ${escapeHtml(storeData.storeInfo?.phone) || 'Đang cập nhật'}</div>
-                        </div>
-                    `;
-                }
-                
-                // Tạo HTML cho các nút hành động dựa trên trạng thái
-                let actionButtons = '';
-                if(statusText === 'Chờ xác nhận') {
-                    actionButtons = `
-                        <button onclick="updateOrderStatus('${o.orderId}', 'Đã xác nhận')" class="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-check"></i> Xác nhận</button>
-                        <button onclick="updateOrderStatus('${o.orderId}', 'Đã hủy')" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-times"></i> Hủy đơn</button>
-                    `;
-                } else if(statusText === 'Đã xác nhận') {
-                    actionButtons = `
-                        <button onclick="updateOrderStatus('${o.orderId}', 'Đang giao hàng')" class="bg-purple-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-truck"></i> Đang giao</button>
-                        <button onclick="updateOrderStatus('${o.orderId}', 'Đã hủy')" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-times"></i> Hủy đơn</button>
-                    `;
-                } else if(statusText === 'Đang giao hàng') {
-                    actionButtons = `
-                        <button onclick="updateOrderStatus('${o.orderId}', 'Hoàn thành')" class="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-check-circle"></i> Hoàn thành</button>
-                        <button onclick="updateOrderStatus('${o.orderId}', 'Đã hủy')" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-times"></i> Hủy đơn</button>
-                    `;
-                } else if(statusText === 'Yêu cầu trả hàng') {
-                    actionButtons = `
-                        <button onclick="viewReturnRequest('${o.orderId}')" class="bg-orange-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-undo-alt"></i> Xử lý trả hàng</button>
-                    `;
-                } else if(statusText === 'Đã hoàn tiền') {
-                    actionButtons = `<span class="text-emerald-600 text-sm"><i class="fas fa-money-bill-wave"></i> Đã hoàn tiền</span>`;
-                }
-                
-                html += `
-                    <div class="border rounded-xl p-4 mb-4 bg-white shadow-sm hover:shadow-md transition">
-                        <div class="flex justify-between items-start flex-wrap gap-2">
-                            <div>
-                                <span class="font-bold text-indigo-600">#${o.orderId}</span>
-                                <span class="ml-2 text-xs text-slate-400">${o.date}</span>
-                            </div>
-                            <div class="flex gap-2">
-                                <span class="px-2 py-1 rounded-full text-xs font-semibold ${statusColor}">${statusText}</span>
-                                <span class="px-2 py-1 rounded-full text-xs font-semibold ${o.deliveryMethod === 'ship' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}">
-                                    ${o.deliveryMethod === 'ship' ? '🚚 Giao hàng' : '🏪 Đến lấy'}
-                                </span>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-3">
-                            <div class="font-semibold text-sm text-slate-500">📦 SẢN PHẨM ĐẶT MUA:</div>
-                            <div class="text-sm mt-1 space-y-1">
-                                ${o.items.map(item => `<div class="flex justify-between"><span>• ${escapeHtml(item.name)} x${item.qty}</span><span class="font-medium">${(item.price * item.qty).toLocaleString()}đ</span></div>`).join('')}
-                                <div class="border-t pt-1 mt-1 flex justify-between font-bold"><span>Tổng cộng:</span><span class="text-emerald-600">${orderTotal.toLocaleString()}đ</span></div>
-                            </div>
-                        </div>
-                        
-                        ${customerInfoHtml}
-                        
-                        <div class="flex gap-2 mt-4 pt-2 border-t flex-wrap">
-                            ${actionButtons}
-                            <button onclick="deleteOrder('${o.orderId}')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded-lg text-sm transition"><i class="fas fa-trash-alt"></i> Xóa</button>
+                <div class="mt-3">
+                    <div class="font-semibold text-sm text-slate-500">📦 SẢN PHẨM ĐẶT MUA:</div>
+                    <div class="text-sm mt-1 space-y-1">
+                        ${itemsHtml}
+                        <div class="border-t pt-1 mt-1 flex justify-between font-bold">
+                            <span>Tổng cộng:</span>
+                            <span class="text-emerald-600">${orderTotal.toLocaleString()}đ</span>
                         </div>
                     </div>
-                `;
-            });
-            
-            document.getElementById('orderList').innerHTML = html;
-            document.getElementById('totalRevenue').innerHTML = total.toLocaleString();
-        }
+                </div>
+                
+                ${customerInfoHtml}
+                
+                <div class="flex gap-2 mt-4 pt-2 border-t flex-wrap">
+                    ${actionButtons}
+                    <button onclick="deleteOrder('${o.orderId}')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded-lg text-sm transition"><i class="fas fa-trash-alt"></i> Xóa</button>
+                </div>
+            </div>
+        `;
+    });
+    
+    document.getElementById('orderList').innerHTML = html;
+    document.getElementById('totalRevenue').innerHTML = total.toLocaleString();
+}
 
                 // ==================== QUẢN LÝ TRẢ HÀNG ====================
         
@@ -1957,6 +2502,69 @@ window.updateOrderStatus = function(orderId, newStatus) {
 
         function refreshAll() {
             location.reload();
+        }
+
+        function addAttribute() {
+            let attrId = Date.now();
+            currentAttributes.push({ id: attrId, name: "", options: [] });
+            renderAttributesList();
+        }
+
+        function renderAttributesList() {
+            let container = document.getElementById('attributesList');
+            if(!container) return;
+            
+            if(currentAttributes.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400 italic">Chưa có thuộc tính nào. Thêm thuộc tính để phân loại sản phẩm.</p>';
+                return;
+            }
+            
+            container.innerHTML = currentAttributes.map(attr => `
+                <div class="attribute-item">
+                    <div class="flex gap-2 mb-2">
+                        <input type="text" placeholder="Tên thuộc tính (VD: Vị, Màu sắc, Size, Dung lượng)" 
+                            class="flex-1 p-2 border rounded-lg text-sm" 
+                            value="${escapeHtml(attr.name)}"
+                            onchange="updateAttributeName(${attr.id}, this.value)">
+                        <button onclick="removeAttribute(${attr.id})" class="text-red-500 text-sm px-3 bg-red-50 rounded-lg">
+                            <i class="fas fa-trash"></i> Xóa
+                        </button>
+                    </div>
+                    <div class="pl-2">
+                        <label class="text-xs text-slate-500 block mb-1">Các giá trị (cách nhau bằng dấu phẩy):</label>
+                        <input type="text" placeholder="VD: Đỏ, Xanh, Vàng" 
+                            class="w-full p-2 border rounded-lg text-sm"
+                            value="${attr.options.join(', ')}"
+                            onchange="updateAttributeOptions(${attr.id}, this.value)">
+                        <div class="flex flex-wrap gap-1 mt-2">
+                            ${attr.options.map(opt => `<span class="attribute-tag"><i class="fas fa-tag"></i> ${escapeHtml(opt)}</span>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateAttributeName(id, name) {
+            let attr = currentAttributes.find(a => a.id == id);
+            if(attr) attr.name = name;
+        }
+
+        function updateAttributeOptions(id, optionsStr) {
+            let attr = currentAttributes.find(a => a.id == id);
+            if(attr) {
+                attr.options = optionsStr.split(',').map(o => o.trim()).filter(o => o);
+                renderAttributesList(); // Cập nhật lại để hiển thị tags
+            }
+        }
+
+        function removeAttribute(id) {
+            currentAttributes = currentAttributes.filter(a => a.id != id);
+            renderAttributesList();
+        }
+
+        function resetAttributes() {
+            currentAttributes = [];
+            renderAttributesList();
         }
 
     </script>

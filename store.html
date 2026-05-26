@@ -669,10 +669,15 @@ function loadStoreData() {
             storeTitleEl.innerHTML = `<i class="fas fa-store"></i> ${currentStoreName}`;
         }
         
-        // Cập nhật slogan (nếu có)
+        // Cập nhật slogan từ mô tả cửa hàng
         let storeSloganEl = document.getElementById('storeSlogan');
         if (storeSloganEl) {
-            storeSloganEl.innerText = storeInfo.description || "Mua sắm dễ dàng";
+            let description = storeInfo.description || " ";
+            // Giới hạn độ dài nếu cần (tùy chọn)
+            if (description.length > 60) {
+                description = description.substring(0, 57) + '...';
+            }
+            storeSloganEl.innerText = description;
         }
         
         // ========== BỎ QUA CÁC ELEMENT KHÔNG TỒN TẠI ==========

@@ -23,6 +23,7 @@
     firebase.initializeApp(firebaseConfig);
   }
   const db = firebase.database();
+  const storage = firebase.storage();
 </script>
 
     <meta charset="UTF-8">
@@ -493,18 +494,17 @@
         let currentAttributes = [];  // <=== DI CHUYỂN LÊN ĐẦu
         let currentChartType = 'product';
         let currentChartLimit = 5;
+        let currentReceiptOrder = null;
 
-        function init() {
+function init() {
     let userStr = localStorage.getItem('currentUser');
-    if(!userStr) { 
-        window.location.href = 'register.html'; 
-        return; 
+    if (!userStr) {
+        window.location.href = 'register.html';
+        return;
     }
     currentStore = JSON.parse(userStr);
-    storeId = currentStore.storeId;
-    
-    document.getElementById('storeNameDisplay').innerHTML = `<i class="fas fa-store"></i> ${currentStore.storeName}`;
-    
+    storeId = currentStore.storeId;  // <=== PHẢI CÓ DÒNG NÀY
+    console.log("storeId initialized:", storeId);
     loadStoreData();
 }
 
@@ -2149,7 +2149,7 @@ window.updateOrderStatus = function(orderId, newStatus) {
         }
 
         // Hiển thị danh sách đơn hàng
-        function renderOrders() {
+function renderOrders() {
     let orders = storeData.orders || [];
     let total = 0;
     let html = '';
@@ -2177,69 +2177,117 @@ window.updateOrderStatus = function(orderId, newStatus) {
             default: statusColor = 'bg-gray-100 text-gray-700';
         }
         
-        let customerInfoHtml = '';
+        // ========== LẤY THÔNG TIN KHÁCH HÀNG TỪ ĐƠN HÀNG ==========
+        // Hỗ trợ cả cấu trúc cũ (customerInfo) và cấu trúc mới (customerInfo.fullName)
         let customer = o.customerInfo || {};
+        let customerName = customer.fullName || customer.name || 'Khách hàng';
+        let customerPhone = customer.phone || '';
+        let customerAddress = customer.address || '';
         
-        if(o.deliveryMethod === 'ship') {
+        // Nếu là đơn đến lấy tại cửa hàng
+        let isPickup = o.deliveryMethod === 'pickup';
+        
+        // ========== HIỂN THỊ THÔNG TIN KHÁCH HÀNG RÕ RÀNG ==========
+        let customerInfoHtml = '';
+        
+        if (isPickup) {
             customerInfoHtml = `
-                <div class="bg-blue-50 p-3 rounded-lg mt-2 text-sm">
-                    <div class="font-bold text-blue-700 mb-2"><i class="fas fa-user-circle"></i> THÔNG TIN KHÁCH HÀNG</div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div><i class="fas fa-user w-5"></i> Tên: <span class="font-medium">${escapeHtml(customer.name) || 'Chưa có'}</span></div>
-                        <div><i class="fas fa-phone w-5"></i> SĐT: <span class="font-medium">${escapeHtml(customer.phone) || 'Chưa có'}</span></div>
-                        <div class="col-span-2"><i class="fas fa-map-marker-alt w-5"></i> Địa chỉ: <span class="font-medium">${escapeHtml(customer.address) || 'Chưa có'}</span></div>
-                        ${customer.note ? `<div class="col-span-2"><i class="fas fa-sticky-note w-5"></i> Ghi chú: ${escapeHtml(customer.note)}</div>` : ''}
+                <div class="bg-green-50 p-4 rounded-lg mt-3 border-l-4 border-green-500">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fas fa-store text-green-600"></i>
+                        <span class="font-bold text-green-700">HÌNH THỨC: ĐẾN LẤY TẠI CỬA HÀNG</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-user w-5 text-gray-500"></i>
+                            <span class="text-gray-600">Khách hàng:</span>
+                            <span class="font-medium text-gray-800">${escapeHtml(customerName)}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-phone w-5 text-gray-500"></i>
+                            <span class="text-gray-600">SĐT:</span>
+                            <span class="font-medium text-gray-800">${escapeHtml(customerPhone)}</span>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-400">
+                        <i class="fas fa-clock"></i> Khách sẽ đến lấy tại địa chỉ cửa hàng
                     </div>
                 </div>
             `;
         } else {
             customerInfoHtml = `
-                <div class="bg-purple-50 p-3 rounded-lg mt-2 text-sm">
-                    <div class="font-bold text-purple-700 mb-2"><i class="fas fa-store"></i> HÌNH THỨC: ĐẾN LẤY TẠI CỬA HÀNG</div>
-                    <div><i class="fas fa-map-marker-alt w-5"></i> Địa chỉ: ${escapeHtml(storeData.storeInfo?.address) || 'Đang cập nhật'}</div>
-                    <div><i class="fas fa-phone w-5"></i> Liên hệ: ${escapeHtml(storeData.storeInfo?.phone) || 'Đang cập nhật'}</div>
+                <div class="bg-blue-50 p-4 rounded-lg mt-3 border-l-4 border-blue-500">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fas fa-truck text-blue-600"></i>
+                        <span class="font-bold text-blue-700">THÔNG TIN GIAO HÀNG</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-user w-5 text-gray-500"></i>
+                            <span class="text-gray-600">Người nhận:</span>
+                            <span class="font-medium text-gray-800">${escapeHtml(customerName)}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-phone w-5 text-gray-500"></i>
+                            <span class="text-gray-600">SĐT:</span>
+                            <span class="font-medium text-gray-800">${escapeHtml(customerPhone)}</span>
+                        </div>
+                        <div class="col-span-2 flex items-start gap-2">
+                            <i class="fas fa-map-marker-alt w-5 text-gray-500 mt-0.5"></i>
+                            <span class="text-gray-600">Địa chỉ giao:</span>
+                            <span class="font-medium text-gray-800 flex-1">${escapeHtml(customerAddress)}</span>
+                        </div>
+                    </div>
                 </div>
             `;
         }
         
-        // ========== XỬ LÝ HIỂN THỊ SẢN PHẨM TRONG ĐƠN HÀNG ==========
+        // ========== HIỂN THỊ SẢN PHẨM TRONG ĐƠN HÀNG ==========
         let itemsHtml = '';
-        o.items.forEach(item => {
-            let itemName = escapeHtml(item.name);
-            
-            // Xử lý hiển thị thuộc tính cho sản phẩm lẻ
-            if(item.type === 'product' && item.selectedAttrs && Object.keys(item.selectedAttrs).length > 0) {
-                let attrsText = Object.entries(item.selectedAttrs).map(([key, val]) => `${key}: ${val}`).join(', ');
-                itemName = `${item.name} (${attrsText})`;
-            }
-            // Xử lý hiển thị thuộc tính cho combo
-            else if(item.type === 'combo' && item.selectedAttributes && Object.keys(item.selectedAttributes).length > 0) {
-                let attrsList = [];
-                for(let [productId, attrs] of Object.entries(item.selectedAttributes)) {
-                    if(typeof attrs === 'object') {
-                        let attrsText = Object.entries(attrs).map(([key, val]) => `${key}: ${val}`).join(', ');
-                        attrsList.push(attrsText);
-                    } else {
-                        attrsList.push(attrs);
+        if (o.items && o.items.length > 0) {
+            o.items.forEach(item => {
+                let itemName = escapeHtml(item.name);
+                
+                // Xử lý thuộc tính cho sản phẩm lẻ
+                if(item.type === 'product' && item.selectedAttrs && Object.keys(item.selectedAttrs).length > 0) {
+                    let attrsText = Object.entries(item.selectedAttrs).map(([key, val]) => `${key}: ${val}`).join(', ');
+                    itemName = `${item.name} (${attrsText})`;
+                }
+                // Xử lý thuộc tính cho combo
+                else if(item.type === 'combo' && item.selectedAttributes && Object.keys(item.selectedAttributes).length > 0) {
+                    let attrsList = [];
+                    for(let [productId, attrs] of Object.entries(item.selectedAttributes)) {
+                        if(typeof attrs === 'object') {
+                            let attrsText = Object.entries(attrs).map(([key, val]) => `${key}: ${val}`).join(', ');
+                            attrsList.push(attrsText);
+                        } else {
+                            attrsList.push(attrs);
+                        }
+                    }
+                    if(attrsList.length > 0) {
+                        itemName = `${item.name} [${attrsList.join(', ')}]`;
                     }
                 }
-                if(attrsList.length > 0) {
-                    itemName = `${item.name} [${attrsList.join(', ')}]`;
-                }
-            }
-            // Xử lý hiển thị vị cũ cho combo
-            else if(item.type === 'combo' && item.selectedFlavors && Object.keys(item.selectedFlavors).length > 0) {
-                let flavorText = Object.values(item.selectedFlavors).join(', ');
-                itemName = `${item.name} (Vị: ${flavorText})`;
-            }
-            
-            itemsHtml += `<div class="flex justify-between"><span>• ${itemName} x${item.qty}</span><span class="font-medium">${(item.price * item.qty).toLocaleString()}đ</span></div>`;
-        });
+                
+                itemsHtml += `<div class="flex justify-between py-1 border-b border-gray-100">
+                                <span class="text-gray-700">• ${itemName} x${item.qty}</span>
+                                <span class="font-medium text-indigo-600">${(item.price * item.qty).toLocaleString()}đ</span>
+                            </div>`;
+            });
+        }
         
+        // Trong phần actionButtons, thêm nút xem bill cho đơn hàng chuyển khoản
         let actionButtons = '';
         if(statusText === 'Chờ xác nhận') {
             actionButtons = `
                 <button onclick="updateOrderStatus('${o.orderId}', 'Đã xác nhận')" class="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-check"></i> Xác nhận</button>
+                <button onclick="updateOrderStatus('${o.orderId}', 'Đã hủy')" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-times"></i> Hủy đơn</button>
+            `;
+        } else if(statusText === 'Đã chuyển khoản') {
+            // Thêm nút xem bill CK
+            actionButtons = `
+                <button onclick="viewReceipt('${o.orderId}')" class="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-receipt"></i> Xem bill CK</button>
+                <button onclick="updateOrderStatus('${o.orderId}', 'Đã xác nhận')" class="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-check"></i> Xác nhận đã nhận tiền</button>
                 <button onclick="updateOrderStatus('${o.orderId}', 'Đã hủy')" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-times"></i> Hủy đơn</button>
             `;
         } else if(statusText === 'Đã xác nhận') {
@@ -2252,40 +2300,43 @@ window.updateOrderStatus = function(orderId, newStatus) {
                 <button onclick="updateOrderStatus('${o.orderId}', 'Hoàn thành')" class="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-check-circle"></i> Hoàn thành</button>
                 <button onclick="updateOrderStatus('${o.orderId}', 'Đã hủy')" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-times"></i> Hủy đơn</button>
             `;
-        } else if(statusText === 'Yêu cầu trả hàng') {
-            actionButtons = `<button onclick="viewReturnRequest('${o.orderId}')" class="bg-orange-500 text-white px-3 py-1.5 rounded-lg text-sm"><i class="fas fa-undo-alt"></i> Xử lý trả hàng</button>`;
-        } else if(statusText === 'Đã hoàn tiền') {
-            actionButtons = `<span class="text-emerald-600 text-sm"><i class="fas fa-money-bill-wave"></i> Đã hoàn tiền</span>`;
         }
         
+        // Tạo HTML cho đơn hàng
         html += `
             <div class="border rounded-xl p-4 mb-4 bg-white shadow-sm hover:shadow-md transition">
-                <div class="flex justify-between items-start flex-wrap gap-2">
+                <div class="flex justify-between items-start flex-wrap gap-2 pb-2 border-b">
                     <div>
-                        <span class="font-bold text-indigo-600">#${o.orderId}</span>
+                        <span class="font-bold text-indigo-600 text-lg">#${o.orderId}</span>
                         <span class="ml-2 text-xs text-slate-400">${o.date}</span>
                     </div>
                     <div class="flex gap-2">
                         <span class="px-2 py-1 rounded-full text-xs font-semibold ${statusColor}">${statusText}</span>
-                        <span class="px-2 py-1 rounded-full text-xs font-semibold ${o.deliveryMethod === 'ship' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}">
-                            ${o.deliveryMethod === 'ship' ? '🚚 Giao hàng' : '🏪 Đến lấy'}
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold ${isPickup ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}">
+                            ${isPickup ? '🏪 Đến lấy' : '🚚 Giao hàng'}
+                        </span>
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold ${o.paymentMethod === 'cod' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+                            ${o.paymentMethod === 'cod' ? '💰 COD' : '🏦 Chuyển khoản'}
                         </span>
                     </div>
                 </div>
                 
+                <!-- THÔNG TIN KHÁCH HÀNG - NỔI BẬT -->
+                ${customerInfoHtml}
+                
+                <!-- DANH SÁCH SẢN PHẨM -->
                 <div class="mt-3">
-                    <div class="font-semibold text-sm text-slate-500">📦 SẢN PHẨM ĐẶT MUA:</div>
-                    <div class="text-sm mt-1 space-y-1">
+                    <div class="font-semibold text-sm text-gray-500 mb-2">📦 SẢN PHẨM ĐẶT MUA:</div>
+                    <div class="bg-gray-50 rounded-lg p-3">
                         ${itemsHtml}
-                        <div class="border-t pt-1 mt-1 flex justify-between font-bold">
+                        <div class="flex justify-between pt-2 mt-1 border-t border-gray-200 font-bold">
                             <span>Tổng cộng:</span>
-                            <span class="text-emerald-600">${orderTotal.toLocaleString()}đ</span>
+                            <span class="text-emerald-600 text-lg">${orderTotal.toLocaleString()}đ</span>
                         </div>
                     </div>
                 </div>
                 
-                ${customerInfoHtml}
-                
+                <!-- NÚT THAO TÁC -->
                 <div class="flex gap-2 mt-4 pt-2 border-t flex-wrap">
                     ${actionButtons}
                     <button onclick="deleteOrder('${o.orderId}')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded-lg text-sm transition"><i class="fas fa-trash-alt"></i> Xóa</button>
@@ -2667,6 +2718,122 @@ window.closeStoreModal = function(event) {
     document.getElementById('storeModal').classList.remove('flex');
 }
 
+function viewReceipt(orderId) {
+    console.log("viewReceipt called with orderId:", orderId);
+    console.log("storeData.orders:", storeData.orders);
+    
+    // Tìm đơn hàng trong storeData
+    let order = storeData.orders.find(o => o.orderId === orderId);
+    
+    if (order && order.paymentReceipt && order.paymentReceipt.image) {
+        currentReceiptOrder = order;  // GÁN GIÁ TRỊ VÀO BIẾN TOÀN CỤC
+        console.log("currentReceiptOrder set successfully:", currentReceiptOrder);
+        console.log("Order ID:", currentReceiptOrder.orderId);
+        
+        document.getElementById('receiptFullImage').src = order.paymentReceipt.image;
+        document.getElementById('viewReceiptModal').classList.remove('hidden');
+        document.getElementById('viewReceiptModal').classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    } else {
+        console.error("Không tìm thấy ảnh biên lai cho đơn hàng:", orderId);
+        console.log("Order found:", order);
+        console.log("PaymentReceipt:", order?.paymentReceipt);
+        showToast("Không tìm thấy ảnh biên lai!", "error");
+    }
+}
+
+function closeViewReceiptModal(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById('viewReceiptModal').classList.add('hidden');
+    document.getElementById('viewReceiptModal').classList.remove('flex');
+    document.body.style.overflow = '';
+    // KHÔNG reset currentReceiptOrder ở đây, để hàm approvePayment còn dùng
+    // currentReceiptOrder = null; // <=== KHÔNG NÊN RESET Ở ĐÂY
+}
+
+async function approvePayment() {
+    console.log("=== approvePayment started ===");
+    console.log("currentReceiptOrder:", currentReceiptOrder);
+    
+    // KIỂM TRA KỸ currentReceiptOrder
+    if (!currentReceiptOrder) {
+        console.error("currentReceiptOrder is null!");
+        showToast("Không tìm thấy đơn hàng! Vui lòng thử lại.", "error");
+        return;
+    }
+    
+    if (!currentReceiptOrder.orderId) {
+        console.error("currentReceiptOrder.orderId is null!", currentReceiptOrder);
+        showToast("Lỗi dữ liệu đơn hàng!", "error");
+        return;
+    }
+    
+    console.log("Order ID:", currentReceiptOrder.orderId);
+    console.log("Store ID:", storeId);
+    
+    if (!storeId) {
+        console.error("storeId is null!");
+        showToast("Lỗi: Không xác định được cửa hàng!", "error");
+        return;
+    }
+    
+    let orderTotal = currentReceiptOrder.subtotal || currentReceiptOrder.total || 0;
+    
+    if (!confirm(`Xác nhận đã nhận tiền từ đơn hàng #${currentReceiptOrder.orderId}?\n💰 Số tiền: ${orderTotal.toLocaleString()}đ`)) {
+        return;
+    }
+    
+    showToast("Đang xử lý...", "info");
+    
+    try {
+        // Lấy dữ liệu mới nhất từ Firebase
+        const ordersRef = db.ref(`stores/${storeId}/orders`);
+        console.log("Fetching from:", `stores/${storeId}/orders`);
+        
+        const snapshot = await ordersRef.once('value');
+        let orders = snapshot.val() || [];
+        
+        console.log("Orders found:", orders.length);
+        
+        const orderIndex = orders.findIndex(o => o.orderId === currentReceiptOrder.orderId);
+        
+        if (orderIndex !== -1) {
+            // Cập nhật trạng thái
+            orders[orderIndex].status = 'Đã xác nhận';
+            
+            if (orders[orderIndex].paymentReceipt) {
+                orders[orderIndex].paymentReceipt.status = 'approved';
+                orders[orderIndex].paymentReceipt.approvedAt = new Date().toLocaleString('vi-VN');
+                orders[orderIndex].paymentReceipt.approvedBy = currentStore?.storeName || 'Admin';
+            }
+            
+            // Lưu lên Firebase
+            await ordersRef.set(orders);
+            console.log("Saved successfully!");
+            
+            // Cập nhật storeData local
+            storeData.orders = orders;
+            
+            // Đóng modal
+            closeViewReceiptModal();
+            
+            // Render lại danh sách đơn hàng
+            if (typeof renderOrders === 'function') {
+                renderOrders();
+            }
+            
+            showToast(`✅ Đã xác nhận thanh toán cho đơn hàng #${currentReceiptOrder.orderId}!`, "success");
+            currentReceiptOrder = null;
+        } else {
+            console.error("Order not found:", currentReceiptOrder.orderId);
+            showToast("Không tìm thấy đơn hàng!", "error");
+        }
+    } catch (error) {
+        console.error("Lỗi chi tiết:", error);
+        showToast("Lỗi kết nối server! " + (error.message || "Vui lòng thử lại."), "error");
+    }
+}
+
     </script>
 
         <!-- MODAL XEM YÊU CẦU TRẢ HÀNG -->
@@ -2750,6 +2917,34 @@ window.closeStoreModal = function(event) {
             <div id="filePreviewContent" class="flex items-center justify-center min-h-[300px]"></div>
         </div>
     </div>
+
+    <!-- MODAL XEM BIÊN LAI CHUYỂN KHOẢN -->
+<div id="viewReceiptModal" class="fixed inset-0 z-[2100] hidden items-center justify-center modal-overlay" onclick="closeViewReceiptModal(event)">
+    <div class="bg-white rounded-2xl max-w-lg w-full mx-4 overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex justify-between items-center">
+            <h2 class="text-xl font-bold text-white">
+                <i class="fas fa-receipt mr-2"></i> BIÊN LAI CHUYỂN KHOẢN
+            </h2>
+            <button onclick="closeViewReceiptModal()" class="text-white text-2xl hover:text-gray-200">&times;</button>
+        </div>
+        <div class="p-6">
+            <div id="receiptImageView" class="text-center">
+                <img id="receiptFullImage" src="" class="max-w-full max-h-96 object-contain rounded-lg mx-auto">
+            </div>
+            <div class="mt-4 bg-gray-50 rounded-lg p-3">
+                <p class="text-sm text-gray-600"><i class="fas fa-info-circle text-blue-500"></i> Vui lòng kiểm tra ảnh biên lai và xác nhận thanh toán cho khách hàng.</p>
+            </div>
+            <div class="flex gap-3 mt-5">
+                <button onclick="approvePayment()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg font-semibold transition">
+                    <i class="fas fa-check-circle"></i> Xác nhận đã nhận tiền
+                </button>
+                <button onclick="closeViewReceiptModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold transition">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>

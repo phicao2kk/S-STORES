@@ -5,7 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>S-STORES - Tạo cửa hàng online miễn phí</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              game: {
+                bg: '#0b0f19',
+                card: '#131b2e',
+                hover: '#1e293b',
+                border: '#1f2937',
+                primary: '#8b5cf6',
+                secondary: '#10b981',
+                accent: '#ec4899'
+              }
+            },
+            fontFamily: {
+              sans: ['Outfit', 'Inter', 'sans-serif']
+            }
+          }
+        }
+      }
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+      
+      body {
+        font-family: 'Outfit', 'Inter', sans-serif;
+      }
+      .shadow-glow-purple {
+        box-shadow: 0 0 15px -3px rgba(139, 92, 246, 0.4);
+      }
+      .shadow-glow-green {
+        box-shadow: 0 0 15px -3px rgba(16, 185, 129, 0.4);
+      }
+      /* Custom Scrollbars */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0b0f19;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #1f2937;
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #8b5cf6;
+      }
+    </style>
 </head>
 <!-- Firebase App (the core Firebase SDK) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -35,72 +85,78 @@
   const storage = firebase.storage();
 </script>
 
-<body class="bg-gradient-to-br from-indigo-50 to-sky-100 min-h-screen">
-    <div class="min-h-screen flex flex-col">
-        <nav class="bg-white shadow-sm border-b">
+<body class="bg-game-bg text-slate-100 min-h-screen">
+    <div class="min-h-screen flex flex-col relative overflow-hidden">
+        <!-- Background decorative glows -->
+        <div class="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-game-primary/10 blur-[120px] pointer-events-none"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-game-accent/5 blur-[150px] pointer-events-none"></div>
+
+        <nav class="bg-game-bg/85 backdrop-blur-md border-b border-game-border sticky top-0 z-50">
             <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-                <div class="flex items-center gap-2">
-                    <i class="fas fa-store text-2xl text-indigo-600"></i>
-                    <span class="text-xl font-bold text-indigo-600">S-STORES</span>
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-game-primary to-game-accent flex items-center justify-center shadow-glow-purple">
+                        <i class="fas fa-gamepad text-white text-xl"></i>
+                    </div>
+                    <span class="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-game-primary via-purple-400 to-game-accent">S-STORES</span>
                 </div>
             </div>
         </nav>
 
-        <div class="flex-1 flex items-center justify-center px-4 py-16">
+        <div class="flex-1 flex items-center justify-center px-4 py-20 relative z-10">
             <div class="text-center max-w-3xl mx-auto">
-                <div class="text-6xl mb-6">🛍️</div>
-                <h1 class="text-4xl md:text-6xl font-extrabold bg-gradient-to-r from-indigo-600 to-pink-500 bg-clip-text text-transparent mb-4">
-                    Bán hàng chưa bao giờ dễ dàng hơn
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-game-primary/10 border border-game-primary/30 text-game-primary text-xs font-bold uppercase tracking-widest mb-6">
+                    <span class="w-2 h-2 rounded-full bg-game-secondary animate-pulse"></span>
+                    Nền tảng thương mại điện tử thế hệ mới
+                </div>
+                <h1 class="text-4xl md:text-7xl font-black bg-gradient-to-r from-white via-slate-200 to-game-primary bg-clip-text text-transparent mb-6 uppercase tracking-tight leading-none">
+                    BÁN HÀNG CHƯA BAO GIỜ DỄ DÀNG HƠN
                 </h1>
-                <p class="text-slate-600 text-lg mb-8">
-                    Tạo cửa hàng online miễn phí, quản lý sản phẩm, combo, theo dõi doanh thu.<br>
-                    Nhận link riêng để gửi khách hàng.
+                <p class="text-slate-400 text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
+                    Tạo cửa hàng online miễn phí, quản lý sản phẩm chuyên nghiệp, thiết kế combo hấp dẫn và theo dõi doanh thu thời gian thực. Nhận link riêng gửi khách hàng ngay hôm nay.
                 </p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="register.html" class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition shadow-lg">
+                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    <a href="register.html" class="bg-gradient-to-r from-game-primary to-indigo-600 hover:from-game-primary hover:to-game-accent text-white px-10 py-5 rounded-2xl font-black text-lg transition duration-300 transform hover:scale-105 shadow-glow-purple tracking-widest uppercase flex items-center gap-3">
                         🚀 Tạo cửa hàng ngay
                     </a>
                 </div>
             </div>
         </div>
 
-        <div id="how-it-works" class="bg-white py-16 px-4">
+        <div id="how-it-works" class="bg-game-card/30 border-t border-game-border py-20 px-4 relative z-10">
             <div class="max-w-6xl mx-auto">
-                <h2 class="text-3xl font-bold text-center mb-12">Cách hoạt động</h2>
+                <h2 class="text-3xl md:text-4xl font-black text-center mb-16 text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 uppercase tracking-widest">
+                    CÁCH HOẠT ĐỘNG
+                </h2>
                 <div class="grid md:grid-cols-3 gap-8">
-                    <div class="text-center">
-                        <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <span class="text-2xl font-bold text-indigo-600">1</span>
+                    <div class="bg-game-card border border-game-border/80 p-8 rounded-2xl text-center hover:border-game-primary hover:shadow-glow-purple transition duration-300 transform hover:-translate-y-1">
+                        <div class="w-16 h-16 bg-game-primary/10 rounded-2xl border border-game-primary/30 flex items-center justify-center mx-auto mb-6 shadow-glow-purple">
+                            <span class="text-2xl font-black text-game-primary">01</span>
                         </div>
-                        <h3 class="font-bold text-xl mb-2">Đăng ký tài khoản</h3>
-                        <p class="text-slate-500">Tạo tài khoản người bán hoàn toàn miễn phí</p>
+                        <h3 class="font-black text-xl mb-3 text-white uppercase tracking-wider">Đăng ký tài khoản</h3>
+                        <p class="text-slate-400 leading-relaxed">Tạo tài khoản quản lý người bán nhanh chóng và hoàn toàn miễn phí.</p>
                     </div>
-                    <div class="text-center">
-                        <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <span class="text-2xl font-bold text-indigo-600">2</span>
+                    <div class="bg-game-card border border-game-border/80 p-8 rounded-2xl text-center hover:border-game-primary hover:shadow-glow-purple transition duration-300 transform hover:-translate-y-1">
+                        <div class="w-16 h-16 bg-game-accent/10 rounded-2xl border border-game-accent/30 flex items-center justify-center mx-auto mb-6 shadow-glow-purple">
+                            <span class="text-2xl font-black text-game-accent">02</span>
                         </div>
-                        <h3 class="font-bold text-xl mb-2">Thêm sản phẩm & combo</h3>
-                        <p class="text-slate-500">Upload ảnh, nhập giá, tạo combo hấp dẫn</p>
+                        <h3 class="font-black text-xl mb-3 text-white uppercase tracking-wider">Thêm sản phẩm & combo</h3>
+                        <p class="text-slate-400 leading-relaxed">Đăng tải hình ảnh, thiết lập thuộc tính phân loại, và tạo các gói combo game hấp dẫn.</p>
                     </div>
-                    <div class="text-center">
-                        <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <span class="text-2xl font-bold text-indigo-600">3</span>
+                    <div class="bg-game-card border border-game-border/80 p-8 rounded-2xl text-center hover:border-game-primary hover:shadow-glow-purple transition duration-300 transform hover:-translate-y-1">
+                        <div class="w-16 h-16 bg-game-secondary/10 rounded-2xl border border-game-secondary/30 flex items-center justify-center mx-auto mb-6 shadow-glow-green">
+                            <span class="text-2xl font-black text-game-secondary">03</span>
                         </div>
-                        <h3 class="font-bold text-xl mb-2">Nhận link & bán hàng</h3>
-                        <p class="text-slate-500">Gửi link cửa hàng riêng cho khách</p>
+                        <h3 class="font-black text-xl mb-3 text-white uppercase tracking-wider">Nhận link & bán hàng</h3>
+                        <p class="text-slate-400 leading-relaxed">Gửi link cửa hàng riêng biệt của bạn cho khách hàng và bắt đầu nhận đơn.</p>
                     </div>
                 </div>
             </div>
         </div>
 
-      <!-- THANH BĂNG CỐ ĐỊNH DƯỚI ĐÁY MÀN HÌNH - VIỀN MÀU NHẸ -->
-      <div class="fixed bottom-0 left-0 right-0 bg-transparent backdrop-blur-md border-t border-indigo-500/20 py-2.5 z-[100]">
-          <p class="text-[9px] text-slate-500 uppercase tracking-[2px] text-center flex items-center justify-center gap-2">
-              <span>© 2026</span> 
-              <span class="w-[1px] h-2 bg-white/10"></span> 
-              <span>Thiết kế bởi <b class="text-indigo-400 font-extrabold">Cao Nguyễn Hồng Phi</b></span>
-          </p>
-      </div>
+        <footer class="bg-game-card/60 border-t border-game-border/60 text-slate-500 py-8 text-center text-xs tracking-wider relative z-10">
+            <p class="mb-2">© 2026 S-STORES - NỀN TẢNG TẠO CỬA HÀNG ONLINE CHUYÊN NGHIỆP</p>
+            <p>Thiết kế bởi <b class="text-game-primary font-bold">Cao Nguyễn Hồng Phi</b></p>
+        </footer>
     </div>
 </body>
 </html>

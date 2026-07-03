@@ -2,29 +2,29 @@
 <html lang="vi">
 <head>
     <!-- Firebase App (the core Firebase SDK) -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<!-- Firebase Realtime Database -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <!-- Firebase Realtime Database -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-<script>
-  // Cấu hình Firebase của bạn
-  const firebaseConfig = {
-    apiKey: "AIzaSyDbzHvxBT1mGGIrda2b_JxinZrFTxHM3Hc",
-    authDomain: "fir-s-stores-2007.firebaseapp.com",
-    databaseURL: "https://fir-s-stores-2007-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "fir-s-stores-2007",
-    messagingSenderId: "325985274783",
-    appId: "1:325985274783:web:9601cc0ef9b3ee503ecbaa",
-    measurementId: "G-YH3DV15NT7"
-  };
+    <script>
+        // Cấu hình Firebase của bạn
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbzHvxBT1mGGIrda2b_JxinZrFTxHM3Hc",
+            authDomain: "fir-s-stores-2007.firebaseapp.com",
+            databaseURL: "https://fir-s-stores-2007-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "fir-s-stores-2007",
+            messagingSenderId: "325985274783",
+            appId: "1:325985274783:web:9601cc0ef9b3ee503ecbaa",
+            measurementId: "G-YH3DV15NT7"
+        };
 
-  // Khởi tạo Firebase
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-  }
-  const db = firebase.database();
-  const storage = firebase.storage();
-</script>
+        // Khởi tạo Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+        const storage = firebase.storage();
+    </script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -32,329 +32,436 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        .upload-area { border: 2px dashed #cbd5e1; cursor: pointer; transition: all 0.2s; }
-        .upload-area:hover { border-color: #6366f1; background: #eef2ff; }
-        .image-preview { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
-        .toast { animation: slideIn 0.25s ease forwards; position: fixed; bottom: 20px; right: 20px; z-index: 1000; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(30px);} to { opacity: 1; transform: translateX(0);} }
-        .admin-table { width: 100%; border-collapse: collapse; }
-        .admin-table th, .admin-table td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
-        .admin-table th { background-color: #f8fafc; font-weight: 600; color: #1e293b; position: sticky; top: 0; }
-        .table-container { overflow-x: auto; max-height: 500px; overflow-y: auto; }
-        .badge-success { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
-        .badge-warning { background: #fed7aa; color: #9a3412; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
-        .badge-danger { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
-        .badge-info { background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
-        .progress-bar { height: 6px; background: #e2e8f0; border-radius: 10px; overflow: hidden; }
-        .progress-fill { height: 100%; background: #10b981; border-radius: 10px; transition: width 0.3s; }
-        .stock-zero { background: #fee2e2; border-left: 4px solid #ef4444; }
-        .notification-badge { position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border-radius: 20px; padding: 2px 6px; font-size: 10px; font-weight: bold; min-width: 18px; text-align: center; }
-        .tab-with-notif { position: relative; display: inline-flex; align-items: center; gap: 4px; }
-        .store-info-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .social-icon { transition: all 0.3s ease; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.1); transition: all 0.3s; }
-        .social-icon:hover { transform: translateY(-3px); background: rgba(255,255,255,0.2); }
-        .modal-overlay { background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); }
-        .combo-only-item { background: #fffbeb; border: 1px solid #fcd34d; }
-        .combo-only-item .remove-btn { color: #f59e0b; }
-        .flavor-badge { background: #e0e7ff; color: #4338ca; padding: 2px 8px; border-radius: 20px; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
-        .combo-flavor-select { background: #f3f4f6; border-radius: 6px; padding: 4px 8px; font-size: 12px; width: 100%; max-width: 120px; }
-        .attribute-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
-        .attribute-tag { background: #e0e7ff; color: #4338ca; padding: 4px 10px; border-radius: 20px; font-size: 11px; display: inline-flex; align-items: center; gap: 6px; margin: 2px; }
-        .admin-table td {
-            vertical-align: middle;
-            padding: 10px 8px;
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+        * {
+            font-family: 'Outfit', 'Inter', sans-serif;
         }
-        .admin-table th {
-            padding: 10px 8px;
-            white-space: nowrap;
+        body {
+            background-color: #0b0f19;
+            color: #e2e8f0;
         }
-        .badge-danger, .badge-warning, .badge-success, .badge-info {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 11px;
+        .glass-card {
+            background: rgba(19, 27, 46, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(31, 41, 55, 0.6);
+            border-radius: 1.25rem;
+        }
+        .glow-purple {
+            box-shadow: 0 0 30px -5px rgba(139, 92, 246, 0.25);
+        }
+        .glow-accent {
+            box-shadow: 0 0 30px -5px rgba(236, 72, 153, 0.2);
+        }
+        .shadow-glow-purple {
+            box-shadow: 0 0 20px -3px rgba(139, 92, 246, 0.3);
+        }
+        .bg-gradient-brand {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+        }
+        .bg-gradient-brand-subtle {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.1));
+        }
+        .text-gradient-brand {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .border-glass {
+            border: 1px solid rgba(31, 41, 55, 0.5);
+        }
+        .input-dark {
+            background-color: #0b0f19;
+            border: 1px solid #1f2937;
+            color: #f1f5f9;
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .input-dark:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+        }
+        .input-dark::placeholder {
+            color: #64748b;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            padding: 0.625rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 25px -5px rgba(139, 92, 246, 0.4);
+        }
+        .btn-secondary {
+            background: rgba(31, 41, 55, 0.7);
+            color: #e2e8f0;
+            padding: 0.625rem 1.5rem;
+            border-radius: 0.75rem;
             font-weight: 600;
+            transition: all 0.3s;
+            border: 1px solid #1f2937;
         }
-        .inline-flex {
+        .btn-secondary:hover {
+            background: rgba(31, 41, 55, 0.9);
+        }
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .badge-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+        }
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+        .badge-info {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+        }
+        .badge-purple {
+            background: rgba(139, 92, 246, 0.2);
+            color: #a78bfa;
+        }
+        .table-dark {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .table-dark th {
+            background: rgba(15, 23, 42, 0.6);
+            color: #94a3b8;
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #1e293b;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .table-dark td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #1e293b;
+            color: #e2e8f0;
+            vertical-align: middle;
+        }
+        .table-dark tr:hover td {
+            background: rgba(30, 41, 59, 0.3);
+        }
+        .table-container {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: 1rem;
+        }
+        .table-container::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .table-container::-webkit-scrollbar-track {
+            background: #0b0f19;
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #8b5cf6;
+        }
+        .tab-active {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            box-shadow: 0 0 20px -5px rgba(139, 92, 246, 0.3);
+        }
+        .tab-inactive {
+            background: rgba(31, 41, 55, 0.4);
+            color: #94a3b8;
+            border: 1px solid #1f2937;
+        }
+        .tab-inactive:hover {
+            background: rgba(31, 41, 55, 0.6);
+            color: #e2e8f0;
+        }
+        .upload-area {
+            border: 2px dashed #1f2937;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .upload-area:hover {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.05);
+        }
+        .attribute-tag {
+            background: rgba(139, 92, 246, 0.15);
+            color: #a78bfa;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
             display: inline-flex;
             align-items: center;
+            gap: 0.25rem;
         }
-        .hover\:bg-slate-50:hover {
-            background-color: #f8fafc;
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
         }
-        .admin-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-}
-.admin-table th, 
-.admin-table td {
-    padding: 10px 8px;
-    vertical-align: middle;
-    border-bottom: 1px solid #e2e8f0;
-}
-.admin-table th {
-    background-color: #f8fafc;
-    font-weight: 600;
-    color: #1e293b;
-    position: sticky;
-    top: 0;
-    white-space: nowrap;
-}
-.admin-table td {
-    word-break: break-word;
-}
-.table-container {
-    overflow-x: auto;
-    max-height: 600px;
-    overflow-y: auto;
-    border-radius: 12px;
-}
-#chartContainer::-webkit-scrollbar { width: 6px; }
-#chartContainer::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-#chartContainer::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-/* ========== CHAT BUTTON ========== */
-.chat-button {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-    cursor: pointer;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-}
-
-.chat-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
-}
-
-.chat-button i {
-    font-size: 24px;
-    color: white;
-}
-
-.chat-badge {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background: #ef4444;
-    color: white;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    font-size: 11px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-}
-
-/* Chat drawer */
-.chat-drawer {
-    position: fixed;
-    bottom: 90px;
-    right: 20px;
-    width: 350px;
-    height: 500px;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-    z-index: 999;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    transition: all 0.3s ease;
-}
-
-@media (max-width: 480px) {
-    .chat-drawer {
-        width: calc(100vw - 40px);
-        right: 20px;
-        left: 20px;
-        height: 60vh;
-        bottom: 80px;
-    }
-}
-
-.chat-drawer.hidden {
-    display: none;
-}
-
-.chat-header {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    padding: 12px 16px;
-    color: white;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-}
-
-.chat-header h3 {
-    font-size: 16px;
-    font-weight: 600;
-    margin: 0;
-}
-
-.chat-header i {
-    cursor: pointer;
-    font-size: 18px;
-}
-
-.chat-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px;
-    background: #f8fafc;
-}
-
-.chat-input-area {
-    padding: 12px;
-    background: white;
-    border-top: 1px solid #e2e8f0;
-    display: flex;
-    gap: 8px;
-}
-
-.chat-input-area input {
-    flex: 1;
-    padding: 10px 12px;
-    border: 1px solid #e2e8f0;
-    border-radius: 24px;
-    outline: none;
-    font-size: 14px;
-}
-
-.chat-input-area input:focus {
-    border-color: #6366f1;
-}
-
-.chat-input-area button {
-    background: #6366f1;
-    color: white;
-    border: none;
-    border-radius: 24px;
-    padding: 8px 16px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.chat-input-area button:hover {
-    background: #4f46e5;
-}
-
-/* Message bubbles */
-.message {
-    margin-bottom: 12px;
-    display: flex;
-    flex-direction: column;
-}
-
-.message.customer {
-    align-items: flex-end;
-}
-
-.message.seller {
-    align-items: flex-start;
-}
-
-.message-bubble {
-    max-width: 80%;
-    padding: 8px 12px;
-    border-radius: 16px;
-    font-size: 13px;
-    word-wrap: break-word;
-}
-
-.message.customer .message-bubble {
-    background: #6366f1;
-    color: white;
-    border-bottom-right-radius: 4px;
-}
-
-.message.seller .message-bubble {
-    background: white;
-    color: #1e293b;
-    border: 1px solid #e2e8f0;
-    border-bottom-left-radius: 4px;
-}
-
-.message-time {
-    font-size: 10px;
-    color: #94a3b8;
-    margin-top: 4px;
-    margin-left: 8px;
-    margin-right: 8px;
-}
-
-.message-status {
-    font-size: 9px;
-    color: #94a3b8;
-    margin-left: 8px;
-}
-
-/* ========== CHAT DASHBOARD CẢI TIẾN ========== */
-.chat-button {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-    cursor: pointer;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-}
-
-.chat-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
-}
-
-.chat-button i {
-    font-size: 24px;
-    color: white;
-}
-
-.chat-badge {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background: #ef4444;
-    color: white;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    font-size: 11px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-}
-
-/* Chat drawer chính */
+        .toast {
+            animation: slideIn 0.3s ease forwards;
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 10000;
+            background: #131b2e;
+            border: 1px solid #1f2937;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border-radius: 1rem;
+            padding: 0.75rem 1.25rem;
+            max-width: 350px;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .notification-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #ef4444;
+            color: white;
+            border-radius: 9999px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            min-width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0f19;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8b5cf6;
+        }
+        /* Chat styles */
+        .chat-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .chat-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 30px rgba(139, 92, 246, 0.5);
+        }
+        .chat-button i {
+            font-size: 24px;
+            color: white;
+        }
+        .chat-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+        .chat-drawer {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 380px;
+            height: 520px;
+            background: #131b2e;
+            border: 1px solid #1f2937;
+            border-radius: 16px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        @media (max-width: 480px) {
+            .chat-drawer {
+                width: calc(100vw - 40px);
+                right: 20px;
+                left: 20px;
+                height: 60vh;
+                bottom: 80px;
+            }
+        }
+        .chat-drawer.hidden {
+            display: none;
+        }
+        .chat-header {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            padding: 12px 16px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .chat-header h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin: 0;
+        }
+        .chat-header i {
+            cursor: pointer;
+            font-size: 18px;
+        }
+        .chat-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            background: #0b0f19;
+        }
+        .chat-body::-webkit-scrollbar {
+            width: 3px;
+        }
+        .chat-body::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 4px;
+        }
+        .chat-input-area {
+            padding: 12px;
+            background: #0b0f19;
+            border-top: 1px solid #1f2937;
+            display: flex;
+            gap: 8px;
+        }
+        .chat-input-area input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #1f2937;
+            border-radius: 24px;
+            outline: none;
+            font-size: 14px;
+            background: #131b2e;
+            color: #e2e8f0;
+        }
+        .chat-input-area input:focus {
+            border-color: #8b5cf6;
+        }
+        .chat-input-area input::placeholder {
+            color: #64748b;
+        }
+        .chat-input-area button {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 42px;
+            height: 42px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .chat-input-area button:hover {
+            transform: scale(1.05);
+        }
+        .message {
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+        .message.customer {
+            align-items: flex-end;
+        }
+        .message.seller {
+            align-items: flex-start;
+        }
+        .message-bubble {
+            max-width: 80%;
+            padding: 8px 14px;
+            border-radius: 16px;
+            font-size: 13px;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+        .message.customer .message-bubble {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .message.seller .message-bubble {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-bottom-left-radius: 4px;
+        }
+        .message-time {
+            font-size: 10px;
+            color: #64748b;
+            margin-top: 4px;
+            margin-left: 8px;
+            margin-right: 8px;
+        }
+        .message-status {
+            font-size: 9px;
+            color: #64748b;
+            margin-left: 8px;
+        }
+        /* ========== CHAT DASHBOARD CẢI TIẾN ========== */
 .dashboard-chat-drawer {
     position: fixed;
     bottom: 90px;
     right: 20px;
     width: 800px;
     height: 550px;
-    background: white;
+    background: #131b2e;
+    border: 1px solid #1f2937;
     border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
     z-index: 999;
     display: flex;
     flex-direction: column;
@@ -376,9 +483,8 @@
     display: none;
 }
 
-/* Header chat */
 .dashboard-chat-header {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
     padding: 14px 18px;
     color: white;
     display: flex;
@@ -407,18 +513,16 @@
     background: rgba(255,255,255,0.2);
 }
 
-/* Body chat với 2 cột */
 .dashboard-chat-body {
     flex: 1;
     display: flex;
     overflow: hidden;
 }
 
-/* Danh sách phòng chat bên trái */
 .chat-room-list {
     width: 280px;
-    border-right: 1px solid #e2e8f0;
-    background: #f8fafc;
+    border-right: 1px solid #1f2937;
+    background: #0b0f19;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -435,20 +539,26 @@
 
 .chat-room-search {
     padding: 12px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #1f2937;
 }
 
 .chat-room-search input {
     width: 100%;
     padding: 8px 12px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #1f2937;
     border-radius: 20px;
     font-size: 13px;
     outline: none;
+    background: #0b0f19;
+    color: #e2e8f0;
 }
 
 .chat-room-search input:focus {
-    border-color: #6366f1;
+    border-color: #8b5cf6;
+}
+
+.chat-room-search input::placeholder {
+    color: #64748b;
 }
 
 .chat-room-items {
@@ -458,28 +568,28 @@
 
 .chat-room-item {
     padding: 12px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #1f2937;
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .chat-room-item:hover {
-    background: #f1f5f9;
+    background: rgba(30, 41, 59, 0.5);
 }
 
 .chat-room-item.active {
-    background: #e0e7ff;
-    border-left: 3px solid #6366f1;
+    background: rgba(139, 92, 246, 0.15);
+    border-left: 3px solid #8b5cf6;
 }
 
 .chat-room-item.unread {
-    background: #dbeafe;
+    background: rgba(59, 130, 246, 0.1);
 }
 
 .chat-room-customer {
     font-weight: 600;
     font-size: 14px;
-    color: #1e293b;
+    color: #e2e8f0;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -487,13 +597,13 @@
 
 .chat-room-phone {
     font-size: 11px;
-    color: #64748b;
+    color: #94a3b8;
     margin-top: 2px;
 }
 
 .chat-room-lastmsg {
     font-size: 12px;
-    color: #64748b;
+    color: #94a3b8;
     margin-top: 6px;
     white-space: nowrap;
     overflow: hidden;
@@ -502,7 +612,7 @@
 
 .chat-room-time {
     font-size: 10px;
-    color: #94a3b8;
+    color: #64748b;
 }
 
 .chat-unread-badge {
@@ -515,25 +625,24 @@
     text-align: center;
 }
 
-/* Nội dung chat bên phải */
 .chat-content {
     flex: 1;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background: #ffffff;
+    background: #131b2e;
 }
 
 .chat-content-header {
     padding: 12px 16px;
-    background: #f8fafc;
-    border-bottom: 1px solid #e2e8f0;
+    background: #0b0f19;
+    border-bottom: 1px solid #1f2937;
 }
 
 .chat-content-header .customer-name {
     font-weight: 600;
     font-size: 15px;
-    color: #1e293b;
+    color: #e2e8f0;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -541,7 +650,7 @@
 
 .chat-content-header .customer-phone {
     font-size: 12px;
-    color: #64748b;
+    color: #94a3b8;
     margin-top: 2px;
 }
 
@@ -549,10 +658,9 @@
     flex: 1;
     overflow-y: auto;
     padding: 16px;
-    background: #f9fafb;
+    background: #0b0f19;
 }
 
-/* Message bubbles */
 .chat-message {
     margin-bottom: 16px;
     display: flex;
@@ -577,74 +685,29 @@
 }
 
 .chat-message.customer .chat-message-bubble {
-    background: #6366f1;
+    background: #8b5cf6;
     color: white;
     border-bottom-left-radius: 4px;
 }
 
 .chat-message.seller .chat-message-bubble {
-    background: #e2e8f0;
-    color: #1e293b;
+    background: #1e293b;
+    color: #e2e8f0;
     border-bottom-right-radius: 4px;
 }
 
 .chat-message-time {
     font-size: 10px;
-    color: #94a3b8;
+    color: #64748b;
     margin-top: 4px;
     margin-left: 8px;
     margin-right: 8px;
 }
 
-/* Input area */
-.chat-input-area {
-    padding: 12px 16px;
-    background: white;
-    border-top: 1px solid #e2e8f0;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-.chat-input-area input {
-    flex: 1;
-    padding: 10px 16px;
-    border: 1px solid #e2e8f0;
-    border-radius: 24px;
-    outline: none;
-    font-size: 14px;
-    transition: all 0.2s;
-}
-
-.chat-input-area input:focus {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
-}
-
-.chat-input-area button {
-    background: #6366f1;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.chat-input-area button:hover {
-    background: #4f46e5;
-    transform: scale(1.05);
-}
-
-/* Empty state */
 .chat-empty-state {
     text-align: center;
     padding: 40px 20px;
-    color: #94a3b8;
+    color: #64748b;
 }
 
 .chat-empty-state i {
@@ -652,82 +715,131 @@
     margin-bottom: 12px;
     opacity: 0.5;
 }
-
     </style>
 </head>
-<body class="bg-slate-100">
+<body>
 
-    <div class="max-w-7xl mx-auto px-4 py-5">
-        <div class="flex flex-wrap justify-between items-center mb-6 gap-3">
-            <div>
-                <h1 class="text-2xl font-bold text-indigo-600">S-STORES</h1>
-                <p id="storeNameDisplay" class="text-slate-500 text-sm"></p>
+    <!-- BACKGROUND GLOW -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div class="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/10 blur-[120px]"></div>
+        <div class="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-pink-600/10 blur-[140px]"></div>
+    </div>
+
+    <div class="relative z-10 max-w-7xl mx-auto px-4 py-5">
+        <!-- HEADER -->
+        <div class="flex flex-wrap justify-between items-center gap-3 mb-6">
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-glow-purple">
+                        <i class="fas fa-store text-white text-lg"></i>
+                    </div>
+                    <span class="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-purple-300 to-pink-400">S-STORES</span>
+                </div>
+                <div class="hidden sm:block h-6 w-px bg-slate-700"></div>
+                <div>
+                    <p id="storeNameDisplay" class="text-sm font-semibold text-purple-300 flex items-center gap-2">
+                        <i class="fas fa-store-alt text-purple-400 text-xs"></i> Đang tải...
+                    </p>
+                </div>
             </div>
-            <div class="flex gap-3">
-                <button onclick="openStoreModal()" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm transition"><i class="fas fa-store"></i> Quản lý cửa hàng</button>
-                <button onclick="refreshAll()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition"><i class="fas fa-sync-alt"></i> Cập nhật sản phẩm</button>
-                <button onclick="copyStoreLink()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm transition"><i class="fas fa-link"></i> Sao chép link</button>
-                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="openStoreModal()" class="btn-secondary flex items-center gap-2 text-sm">
+                    <i class="fas fa-store text-purple-400"></i> Cửa hàng
+                </button>
+                <button onclick="refreshAll()" class="btn-secondary flex items-center gap-2 text-sm">
+                    <i class="fas fa-sync-alt text-blue-400"></i> Cập nhật
+                </button>
+                <button onclick="copyStoreLink()" class="btn-primary flex items-center gap-2 text-sm">
+                    <i class="fas fa-link"></i> Sao chép link
+                </button>
+                <button onclick="logout()" class="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-4 py-2 rounded-xl font-semibold text-sm transition flex items-center gap-2 border border-red-500/20">
+                    <i class="fas fa-sign-out-alt"></i> Thoát
+                </button>
             </div>
         </div>
 
-        <!-- Tabs với thông báo -->
-        <div class="flex flex-wrap gap-2 mb-6 border-b pb-2">
-            <button onclick="showTab('products')" id="tabProducts" class="px-5 py-2 rounded-full font-semibold bg-indigo-600 text-white transition">📦 Sản phẩm</button>
-            <button onclick="showTab('combos')" id="tabCombos" class="px-5 py-2 rounded-full font-semibold bg-white text-slate-700 border transition">🎁 Combo</button>
-            <button onclick="showTab('inventory')" id="tabInventory" class="px-5 py-2 rounded-full font-semibold bg-white text-slate-700 border transition relative">
-                <span class="tab-with-notif">📦 Nhập hàng <span id="inventoryNotif" class="hidden notification-badge">0</span></span>
+        <!-- TABS -->
+        <div class="flex flex-wrap gap-2 mb-6">
+            <button onclick="showTab('products')" id="tabProducts" class="tab-active px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2">
+                <i class="fas fa-box"></i> Sản phẩm
             </button>
-            <button onclick="showTab('orders')" id="tabOrders" class="px-5 py-2 rounded-full font-semibold bg-white text-slate-700 border transition">📊 Đơn hàng</button>
+            <button onclick="showTab('combos')" id="tabCombos" class="tab-inactive px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2">
+                <i class="fas fa-layer-group"></i> Combo
+            </button>
+            <button onclick="showTab('inventory')" id="tabInventory" class="tab-inactive px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 relative">
+                <i class="fas fa-truck"></i> Nhập hàng
+                <span id="inventoryNotif" class="hidden notification-badge">0</span>
+            </button>
+            <button onclick="showTab('orders')" id="tabOrders" class="tab-inactive px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2">
+                <i class="fas fa-chart-line"></i> Đơn hàng
+            </button>
         </div>
 
         <!-- TAB SẢN PHẨM -->
         <div id="productsTab">
             <div class="grid lg:grid-cols-3 gap-6">
-                <div class="bg-white rounded-2xl shadow-md p-5 h-fit" id="productFormCard">
-                    <h3 class="text-lg font-bold mb-4" id="formTitle"><i class="fas fa-plus text-indigo-500"></i> Thêm sản phẩm</h3>
+                <!-- Form thêm sản phẩm -->
+                <div class="glass-card p-6 h-fit glow-purple">
+                    <h3 class="text-lg font-bold mb-4 text-purple-300 flex items-center gap-2" id="formTitle">
+                        <i class="fas fa-plus-circle text-purple-400"></i> Thêm sản phẩm
+                    </h3>
                     <div class="space-y-3">
-                        <input type="text" id="prodName" placeholder="Tên sản phẩm" class="w-full p-2 border rounded-lg">
-                        <input type="number" id="prodImport" placeholder="Giá nhập (VNĐ)" class="w-full p-2 border rounded-lg">
-                        <input type="number" id="prodPrice" placeholder="Giá bán (VNĐ)" class="w-full p-2 border rounded-lg">
-                        <div class="upload-area rounded-xl p-3 text-center" onclick="document.getElementById('imageFile').click()">
+                        <input type="text" id="prodName" placeholder="Tên sản phẩm" class="input-dark">
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="number" id="prodImport" placeholder="Giá nhập" class="input-dark">
+                            <input type="number" id="prodPrice" placeholder="Giá bán" class="input-dark">
+                        </div>
+                        <div class="upload-area" onclick="document.getElementById('imageFile').click()">
                             <input type="file" id="imageFile" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
-                            <div id="uploadPlaceholder"><i class="fas fa-cloud-upload-alt text-2xl text-slate-400"></i><p class="text-sm">Click để upload ảnh</p></div>
-                            <div id="previewContainer" class="hidden mt-2"><img id="imagePreview" class="image-preview mx-auto"><button onclick="clearImage()" class="text-xs text-red-500 mt-1">Xóa</button></div>
+                            <div id="uploadPlaceholder">
+                                <i class="fas fa-cloud-upload-alt text-2xl text-slate-500"></i>
+                                <p class="text-sm text-slate-400">Click để upload ảnh</p>
+                            </div>
+                            <div id="previewContainer" class="hidden mt-2">
+                                <img id="imagePreview" class="w-16 h-16 rounded-lg object-cover mx-auto">
+                                <button onclick="clearImage()" class="text-xs text-red-400 mt-1">Xóa</button>
+                            </div>
                         </div>
-                        <div id="attributesContainer" class="border rounded-lg p-3 bg-slate-50">
-                            <label class="font-semibold text-sm block mb-2">📋 Thuộc tính phân loại</label>
-                            <div id="attributesList" class="space-y-2"></div>
-                            <button type="button" onclick="addAttribute()" class="mt-2 text-sm text-blue-500 hover:text-blue-600">
-                                <i class="fas fa-plus"></i> Thêm thuộc tính (VD: Màu sắc, Size, Dung lượng)
+                        <div id="attributesContainer" class="border border-slate-700/50 rounded-xl p-4 bg-slate-800/30">
+                            <label class="font-semibold text-sm text-slate-300 block mb-2">📋 Thuộc tính phân loại</label>
+                            <div id="attributesList" class="space-y-3"></div>
+                            <button type="button" onclick="addAttribute()" class="mt-2 text-sm text-purple-400 hover:text-purple-300 transition flex items-center gap-1">
+                                <i class="fas fa-plus-circle"></i> Thêm thuộc tính (VD: Màu sắc, Size, Dung lượng)
                             </button>
-                            <p class="text-xs text-slate-400 mt-2">Ví dụ: Màu sắc: Đỏ, Xanh, Vàng | Size: S, M, L, XL</p>
+                            <p class="text-xs text-slate-500 mt-2">Ví dụ: Màu sắc: Đỏ, Xanh, Vàng | Size: S, M, L, XL</p>
                         </div>
-                        <input type="number" id="prodStock" placeholder="Tồn kho" class="w-full p-2 border rounded-lg" value=" ">
-                        <button id="submitProductBtn" onclick="submitProduct()" class="w-full bg-indigo-600 text-white py-2 rounded-xl font-semibold">➕ Thêm sản phẩm</button>
-                        <button id="cancelEditBtn" onclick="cancelEdit()" class="w-full bg-gray-300 text-gray-700 py-2 rounded-xl font-semibold hidden">✖️ Hủy chỉnh sửa</button>
+                        <input type="number" id="prodStock" placeholder="Tồn kho" class="input-dark" value="0">
+                        <button id="submitProductBtn" onclick="submitProduct()" class="btn-primary w-full py-3 flex items-center justify-center gap-2">
+                            <i class="fas fa-plus"></i> Thêm sản phẩm
+                        </button>
+                        <button id="cancelEditBtn" onclick="cancelEdit()" class="w-full bg-slate-700/50 text-slate-300 py-3 rounded-xl font-semibold transition hover:bg-slate-700 hidden">
+                            <i class="fas fa-times"></i> Hủy chỉnh sửa
+                        </button>
                     </div>
                 </div>
 
-                <div class="lg:col-span-2 bg-white rounded-2xl shadow-md overflow-hidden">
-                    <div class="bg-slate-100 px-5 py-3 border-b"><h3 class="font-bold"><i class="fas fa-list-ul mr-2"></i> Danh sách sản phẩm</h3></div>
+                <!-- Danh sách sản phẩm -->
+                <div class="lg:col-span-2 glass-card overflow-hidden glow-accent">
+                    <div class="bg-slate-800/30 px-5 py-3 border-b border-slate-700/50 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-300"><i class="fas fa-list-ul mr-2 text-purple-400"></i> Danh sách sản phẩm</h3>
+                        <span class="text-xs text-slate-500" id="productCount">0 sản phẩm</span>
+                    </div>
                     <div class="table-container">
-                        <table class="admin-table">
+                        <table class="table-dark">
                             <thead>
-                                <tr class="bg-slate-100 border-b">
-                                    <th class="text-left py-2 px-2 text-xs font-semibold">Ảnh</th>
-                                    <th class="text-left py-2 px-2 text-xs font-semibold">Tên SP</th>
-                                    <th class="text-left py-2 px-2 text-xs font-semibold">Loại</th>
-                                    <th class="text-right py-2 px-2 text-xs font-semibold">Giá nhập</th>
-                                    <th class="text-right py-2 px-2 text-xs font-semibold">Giá bán</th>
-                                    <th class="text-right py-2 px-2 text-xs font-semibold">Lời</th>
-                                    <th class="text-center py-2 px-2 text-xs font-semibold">Tồn</th>
-                                    <th class="text-center py-2 px-2 text-xs font-semibold">Đã nhập</th>
-                                    <th class="text-center py-2 px-2 text-xs font-semibold">Đã bán</th>
-                                    <th class="text-center py-2 px-2 text-xs font-semibold">Cần nhập</th>
-                                    <th class="text-left py-2 px-2 text-xs font-semibold" style="min-width: 180px;">Thuộc tính</th>
-                                    <th class="text-center py-2 px-2 text-xs font-semibold">Thao tác</th>
                                 <tr>
+                                    <th>Ảnh</th>
+                                    <th>Tên SP</th>
+                                    <th>Loại</th>
+                                    <th class="text-right">Giá nhập</th>
+                                    <th class="text-right">Giá bán</th>
+                                    <th class="text-right">Lời</th>
+                                    <th class="text-center">Tồn</th>
+                                    <th class="text-center">Đã bán</th>
+                                    <th class="text-center">Cần nhập</th>
+                                    <th>Thuộc tính</th>
+                                    <th class="text-center">Thao tác</th>
+                                </tr>
                             </thead>
                             <tbody id="productList"></tbody>
                         </table>
@@ -739,43 +851,53 @@
         <!-- TAB COMBO -->
         <div id="combosTab" class="hidden">
             <div class="grid lg:grid-cols-3 gap-6">
-                <div class="bg-white rounded-2xl shadow-md p-5 h-fit">
-                    <h3 class="text-lg font-bold mb-4"><i class="fas fa-layer-group text-amber-500"></i> Tạo combo</h3>
+                <div class="glass-card p-6 h-fit glow-accent">
+                    <h3 class="text-lg font-bold mb-4 text-amber-400 flex items-center gap-2">
+                        <i class="fas fa-layer-group text-amber-400"></i> Tạo combo
+                    </h3>
                     <div class="space-y-3">
-                        <input type="text" id="comboName" placeholder="Tên combo" class="w-full p-2 border rounded-lg">
-                        <input type="number" id="comboPrice" placeholder="Giá bán combo (VNĐ)" class="w-full p-2 border rounded-lg">
-                        
-                        <!-- Upload ảnh cho combo -->
-                        <div class="upload-area rounded-xl p-3 text-center" onclick="document.getElementById('comboImageFile').click()">
+                        <input type="text" id="comboName" placeholder="Tên combo" class="input-dark">
+                        <input type="number" id="comboPrice" placeholder="Giá bán combo" class="input-dark">
+                        <div class="upload-area" onclick="document.getElementById('comboImageFile').click()">
                             <input type="file" id="comboImageFile" accept="image/*" class="hidden" onchange="handleComboImageUpload(event)">
                             <div id="comboUploadPlaceholder">
-                                <i class="fas fa-cloud-upload-alt text-2xl text-slate-400"></i>
-                                <p class="text-sm text-slate-500">Click để upload ảnh cho combo</p>
-                                <p class="text-xs text-slate-400">Hỗ trợ JPG, PNG, GIF, WebP</p>
+                                <i class="fas fa-cloud-upload-alt text-2xl text-slate-500"></i>
+                                <p class="text-sm text-slate-400">Click để upload ảnh combo</p>
                             </div>
                             <div id="comboPreviewContainer" class="hidden mt-2">
-                                <img id="comboImagePreview" class="image-preview mx-auto">
-                                <button onclick="clearComboImage()" class="text-xs text-red-500 mt-1">Xóa ảnh</button>
+                                <img id="comboImagePreview" class="w-16 h-16 rounded-lg object-cover mx-auto">
+                                <button onclick="clearComboImage()" class="text-xs text-red-400 mt-1">Xóa</button>
                             </div>
                         </div>
-                        
-                        
-                        <!-- Danh sách sản phẩm lẻ có sẵn -->
-                        <div class="border rounded-lg p-3 bg-slate-50">
-                            <label class="font-semibold text-sm block mb-2">📦 Chọn từ sản phẩm lẻ có sẵn</label>
+                        <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+                            <label class="font-semibold text-sm text-slate-300 block mb-2">📦 Chọn sản phẩm lẻ</label>
                             <div id="comboProductSelector" class="space-y-2 max-h-48 overflow-y-auto"></div>
                         </div>
-                        
-                        <button onclick="createCombo()" class="w-full bg-amber-500 text-white py-2 rounded-xl font-semibold">✨ Tạo combo</button>
-                        <button id="cancelEditComboBtn" onclick="cancelEditCombo()" class="w-full bg-gray-500 text-white py-2 rounded-xl font-semibold mt-2 hidden">✖️ Hủy chỉnh sửa</button>
+                        <button onclick="createCombo()" class="btn-primary w-full py-3 flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
+                            <i class="fas fa-magic"></i> Tạo combo
+                        </button>
+                        <button id="cancelEditComboBtn" onclick="cancelEditCombo()" class="w-full bg-slate-700/50 text-slate-300 py-3 rounded-xl font-semibold transition hover:bg-slate-700 hidden">
+                            <i class="fas fa-times"></i> Hủy chỉnh sửa
+                        </button>
                     </div>
                 </div>
-                <div class="lg:col-span-2 bg-white rounded-2xl shadow-md overflow-hidden">
-                    <div class="bg-slate-100 px-5 py-3 border-b"><h3 class="font-bold"><i class="fas fa-cubes mr-2"></i> Danh sách combo</h3></div>
+                <div class="lg:col-span-2 glass-card overflow-hidden glow-purple">
+                    <div class="bg-slate-800/30 px-5 py-3 border-b border-slate-700/50 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-300"><i class="fas fa-cubes mr-2 text-amber-400"></i> Danh sách combo</h3>
+                        <span class="text-xs text-slate-500" id="comboCount">0 combo</span>
+                    </div>
                     <div class="table-container">
-                        <table class="admin-table">
+                        <table class="table-dark">
                             <thead>
-                                <tr><th>Ảnh</th><th>Tên combo</th><th>Giá bán</th><th>Thành phần</th><th>Lợi nhuận</th><th>Đã bán</th><th>Thao tác</th>
+                                <tr>
+                                    <th>Ảnh</th>
+                                    <th>Tên combo</th>
+                                    <th class="text-right">Giá bán</th>
+                                    <th>Thành phần</th>
+                                    <th class="text-right">Lợi nhuận</th>
+                                    <th class="text-center">Đã bán</th>
+                                    <th class="text-center">Thao tác</th>
+                                </tr>
                             </thead>
                             <tbody id="comboList"></tbody>
                         </table>
@@ -787,56 +909,64 @@
         <!-- TAB NHẬP HÀNG -->
         <div id="inventoryTab" class="hidden">
             <div class="grid lg:grid-cols-3 gap-6">
-                <div class="bg-white rounded-2xl shadow-md p-5 h-fit">
-                    <h3 class="text-lg font-bold mb-4"><i class="fas fa-truck text-emerald-500"></i> Nhập hàng</h3>
+                <div class="glass-card p-6 h-fit glow-accent">
+                    <h3 class="text-lg font-bold mb-4 text-emerald-400 flex items-center gap-2">
+                        <i class="fas fa-truck text-emerald-400"></i> Nhập hàng
+                    </h3>
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium mb-1">Chọn sản phẩm</label>
-                            <select id="importProductSelect" class="w-full p-2 border rounded-lg">
+                            <label class="block text-sm font-medium text-slate-400 mb-1">Chọn sản phẩm</label>
+                            <select id="importProductSelect" class="input-dark">
                                 <option value="">-- Chọn sản phẩm --</option>
                             </select>
                         </div>
-                        <!-- ========== THÊM DROPDOWN CHỌN VỊ ========== -->
                         <div id="importFlavorDiv" class="hidden">
-                            <label class="block text-sm font-medium mb-1">Chọn vị</label>
-                            <select id="importFlavorSelect" class="w-full p-2 border rounded-lg">
-                                <option value="">-- Tất cả vị --</option>
+                            <label class="block text-sm font-medium text-slate-400 mb-1">Chọn thuộc tính</label>
+                            <select id="importFlavorSelect" class="input-dark">
+                                <option value="">-- Tất cả --</option>
                             </select>
                         </div>
-                        <!-- ========== KẾT THÚC ========== -->
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Số lượng nhập</label>
-                            <input type="number" id="importQuantity" placeholder="Số lượng" class="w-full p-2 border rounded-lg" min="1" value="1">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-400 mb-1">Số lượng</label>
+                                <input type="number" id="importQuantity" placeholder="SL" class="input-dark" min="1" value="1">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-400 mb-1">Giá nhập</label>
+                                <input type="number" id="importPrice" placeholder="Giá" class="input-dark">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Giá nhập (VNĐ)</label>
-                            <input type="number" id="importPrice" placeholder="Giá nhập" class="w-full p-2 border rounded-lg">
-                            <p class="text-xs text-slate-400 mt-1">Để trống sẽ lấy giá nhập hiện tại</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Ghi chú</label>
-                            <input type="text" id="importNote" placeholder="Nhà cung cấp, ghi chú..." class="w-full p-2 border rounded-lg">
-                        </div>
-                        <button onclick="importStock()" class="w-full bg-emerald-600 text-white py-2 rounded-xl font-semibold">📦 Nhập hàng</button>
+                        <input type="text" id="importNote" placeholder="Ghi chú (nhà cung cấp...)" class="input-dark">
+                        <button onclick="importStock()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-3 rounded-xl font-bold transition flex items-center justify-center gap-2">
+                            <i class="fas fa-arrow-down"></i> Nhập hàng
+                        </button>
                     </div>
                 </div>
 
                 <div class="lg:col-span-2 space-y-4">
-                    <div class="bg-white rounded-2xl shadow-md p-4">
-                        <h3 class="font-bold text-md mb-3"><i class="fas fa-chart-simple text-orange-500"></i> 📋 DANH SÁCH CẦN NHẬP THÊM</h3>
-                        <p class="text-xs text-slate-400 mb-3">Dựa trên đơn hàng đã bán (kể cả sản phẩm đã hết hàng)</p>
+                    <div class="glass-card p-4 glow-purple">
+                        <h3 class="font-bold text-md mb-3 text-orange-400 flex items-center gap-2">
+                            <i class="fas fa-exclamation-triangle text-orange-400"></i> Danh sách cần nhập thêm
+                        </h3>
                         <div id="stockSummary" class="space-y-2 max-h-80 overflow-y-auto"></div>
                     </div>
-
-                    <div class="bg-white rounded-2xl shadow-md overflow-hidden">
-                        <div class="bg-slate-100 px-5 py-3 border-b flex justify-between items-center">
-                            <h3 class="font-bold"><i class="fas fa-history mr-2"></i> Lịch sử nhập hàng</h3>
-                            <button onclick="clearImportHistory()" class="text-red-500 text-xs">Xóa lịch sử</button>
+                    <div class="glass-card overflow-hidden glow-accent">
+                        <div class="bg-slate-800/30 px-5 py-3 border-b border-slate-700/50 flex justify-between items-center">
+                            <h3 class="font-bold text-slate-300"><i class="fas fa-history mr-2 text-emerald-400"></i> Lịch sử nhập hàng</h3>
+                            <button onclick="clearImportHistory()" class="text-xs text-red-400 hover:text-red-300 transition">Xóa lịch sử</button>
                         </div>
                         <div class="table-container">
-                            <table class="admin-table">
+                            <table class="table-dark">
                                 <thead>
-                                    <tr><th>Ngày nhập</th><th>Sản phẩm</th><th>Số lượng</th><th>Giá nhập</th><th>Thành tiền</th><th>Ghi chú</th><th>Thao tác</th></tr>
+                                    <tr>
+                                        <th>Ngày</th>
+                                        <th>Sản phẩm</th>
+                                        <th class="text-center">SL</th>
+                                        <th class="text-right">Giá nhập</th>
+                                        <th class="text-right">Thành tiền</th>
+                                        <th>Ghi chú</th>
+                                        <th class="text-center">Thao tác</th>
+                                    </tr>
                                 </thead>
                                 <tbody id="importHistoryList"></tbody>
                             </table>
@@ -848,168 +978,34 @@
 
         <!-- TAB ĐƠN HÀNG -->
         <div id="ordersTab" class="hidden">
-            <div class="bg-white rounded-2xl shadow-md p-5">
+            <div class="glass-card p-5 glow-purple">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold text-lg"><i class="fas fa-chart-line text-emerald-500"></i> Lịch sử đơn hàng</h3>
-                    <button onclick="clearOrders()" class="text-red-500 text-sm">Xóa lịch sử</button>
+                    <h3 class="font-bold text-lg text-emerald-400 flex items-center gap-2">
+                        <i class="fas fa-chart-line text-emerald-400"></i> Lịch sử đơn hàng
+                    </h3>
+                    <button onclick="clearOrders()" class="text-xs text-red-400 hover:text-red-300 transition">Xóa lịch sử</button>
                 </div>
-                <div id="orderList" class="space-y-2 max-h-96 overflow-y-auto"></div>
-                <div class="border-t pt-4 mt-4 text-right">
-                    <p class="text-lg font-bold">Tổng doanh thu: <span id="totalRevenue" class="text-emerald-600">0</span>đ</p>
-                </div>
-            </div>
-        </div>
-
-    <!-- MODAL QUẢN LÝ CỬA HÀNG -->
-    <div id="storeModal" class="fixed inset-0 z-[2000] hidden items-center justify-center modal-overlay">
-        <div class="bg-white rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
-                <h2 class="text-xl font-bold text-purple-600"><i class="fas fa-store mr-2"></i> Quản lý thông tin cửa hàng</h2>
-                <button onclick="closeStoreModal()" class="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
-            </div>
-            <div class="p-6 space-y-5">
-                <!-- Logo cửa hàng -->
-                <div class="text-center">
-                    <div class="relative inline-block">
-                        <div class="w-28 h-28 rounded-full bg-purple-100 flex items-center justify-center overflow-hidden border-4 border-purple-200 mx-auto" id="storeLogoContainer">
-                            <img id="storeLogoPreview" class="w-full h-full object-cover" src="https://picsum.photos/id/100/200/200" onerror="this.src='https://picsum.photos/200/200'">
-                        </div>
-                        <button onclick="document.getElementById('storeLogoInput').click()" class="absolute bottom-0 right-0 bg-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-purple-600">
-                            <i class="fas fa-camera text-xs"></i>
-                        </button>
-                        <input type="file" id="storeLogoInput" accept="image/*" class="hidden" onchange="handleStoreLogoUpload(event)">
-                    </div>
-                    <p class="text-xs text-slate-400 mt-2">Logo cửa hàng</p>
-                </div>
-
-                <!-- Thông tin cơ bản -->
-                <div class="grid md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Tên cửa hàng *</label>
-                        <input type="text" id="storeName" placeholder="Tên cửa hàng" class="w-full p-2 border rounded-lg">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Số điện thoại</label>
-                        <input type="tel" id="storePhone" placeholder="0xx xxx xxxx" class="w-full p-2 border rounded-lg">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Email</label>
-                        <input type="email" id="storeEmail" placeholder="store@example.com" class="w-full p-2 border rounded-lg">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Website</label>
-                        <input type="url" id="storeWebsite" placeholder="https://..." class="w-full p-2 border rounded-lg">
-                    </div>
-                </div>
-
-                <!-- Địa chỉ -->
-                <div>
-                    <label class="block text-sm font-medium mb-1">Địa chỉ cửa hàng</label>
-                    <textarea id="storeAddress" rows="2" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố" class="w-full p-2 border rounded-lg"></textarea>
-                </div>
-
-                <!-- Thông tin ngân hàng nhận thanh toán -->
-                <div class="border-t pt-4">
-                    <h3 class="font-semibold mb-3 text-blue-600"><i class="fas fa-university"></i> Thông tin nhận thanh toán</h3>
-                    <div class="grid md:grid-cols-2 gap-3">
-                        <input type="text" id="bankName" placeholder="Tên ngân hàng (VD: Vietcombank)" class="w-full p-2 border rounded-lg">
-                        <input type="text" id="bankAccountNumber" placeholder="Số tài khoản" class="w-full p-2 border rounded-lg">
-                        <div class="col-span-2">
-                            <input type="text" id="bankAccountName" placeholder="Tên chủ tài khoản" class="w-full p-2 border rounded-lg">
-                        </div>
-                    </div>
-                    <p class="text-xs text-slate-400 mt-2">Thông tin này sẽ hiển thị cho khách hàng khi họ chọn thanh toán chuyển khoản</p>
-                </div>
-
-                <!-- Mạng xã hội -->
-                <div class="border-t pt-4">
-                    <h3 class="font-semibold mb-3"><i class="fas fa-share-alt text-blue-500"></i> Mạng xã hội</h3>
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 text-center"><i class="fab fa-facebook text-blue-600 text-xl"></i></div>
-                            <input type="url" id="storeFacebook" placeholder="https://facebook.com/..." class="flex-1 p-2 border rounded-lg">
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 text-center"><i class="fab fa-instagram text-pink-500 text-xl"></i></div>
-                            <input type="url" id="storeInstagram" placeholder="https://instagram.com/..." class="flex-1 p-2 border rounded-lg">
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 text-center"><i class="fab fa-youtube text-red-600 text-xl"></i></div>
-                            <input type="url" id="storeYoutube" placeholder="https://youtube.com/..." class="flex-1 p-2 border rounded-lg">
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 text-center"><i class="fab fa-tiktok text-black text-xl"></i></div>
-                            <input type="url" id="storeTiktok" placeholder="https://tiktok.com/@" class="flex-1 p-2 border rounded-lg">
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 text-center"><i class="fab fa-zalo text-blue-500 text-xl"></i></div>
-                            <input type="text" id="storeZalo" placeholder="Số điện thoại Zalo" class="flex-1 p-2 border rounded-lg">
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 text-center"><i class="fab fa-shopify text-green-600 text-xl"></i></div>
-                            <input type="url" id="storeShopee" placeholder="https://shopee.vn/..." class="flex-1 p-2 border rounded-lg">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Thông tin khác -->
-                <div class="border-t pt-4">
-                    <h3 class="font-semibold mb-3"><i class="fas fa-clock text-gray-500"></i> Thông tin khác</h3>
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Giờ mở cửa</label>
-                            <input type="text" id="storeHours" placeholder="VD: 8:00 - 21:00" class="w-full p-2 border rounded-lg">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Ngày nghỉ</label>
-                            <input type="text" id="storeDaysOff" placeholder="VD: Chủ nhật" class="w-full p-2 border rounded-lg">
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <label class="block text-sm font-medium mb-1">Mô tả cửa hàng</label>
-                        <textarea id="storeDescription" rows="3" placeholder="Giới thiệu về cửa hàng của bạn..." class="w-full p-2 border rounded-lg"></textarea>
-                    </div>
-                </div>
-
-                <!-- Trong modal storeModal, thêm phần này trước nút lưu -->
-                <div class="border-t pt-4">
-                    <h3 class="font-semibold mb-3 text-orange-600"><i class="fas fa-store-slash"></i> Trạng thái cửa hàng</h3>
-                    <div class="flex gap-3 mb-3">
-                        <button onclick="setStoreStatusFromModal('open')" id="modalStatusOpen" class="flex-1 bg-green-500 text-white py-2 rounded-lg text-sm hover:bg-green-600 transition">
-                            <i class="fas fa-store"></i> Mở cửa
-                        </button>
-                        <button onclick="setStoreStatusFromModal('temporary')" id="modalStatusTemp" class="flex-1 bg-yellow-500 text-white py-2 rounded-lg text-sm hover:bg-yellow-600 transition">
-                            <i class="fas fa-clock"></i> Đóng tạm thời
-                        </button>
-                        <button onclick="setStoreStatusFromModal('permanent')" id="modalStatusPerm" class="flex-1 bg-red-500 text-white py-2 rounded-lg text-sm hover:bg-red-600 transition">
-                            <i class="fas fa-ban"></i> Đóng vĩnh viễn
-                        </button>
-                    </div>
-                    <p id="storeStatusText" class="text-xs text-slate-500 text-center"></p>
-                </div>
-
-                                <!-- Nút lưu -->
-                <div class="flex gap-3 pt-4 border-t">
-                    <button onclick="saveStoreInfo()" class="flex-1 bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700"><i class="fas fa-save mr-2"></i> Lưu thông tin</button>
-                    <button onclick="closeStoreModal()" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-300">Đóng</button>
+                <div id="orderList" class="space-y-3 max-h-96 overflow-y-auto"></div>
+                <div class="border-t border-slate-700/50 pt-4 mt-4 flex justify-between items-center">
+                    <span class="text-sm text-slate-400">Tổng doanh thu</span>
+                    <span id="totalRevenue" class="text-2xl font-bold text-emerald-400">0đ</span>
                 </div>
             </div>
         </div>
-    </div>
 
-            <!-- ========== TOP SẢN PHẨM BÁN CHẠY - ĐẶT Ở DƯỚI CÙNG ========== -->
-        <div class="bg-white rounded-2xl shadow-md p-4 mt-6">
-            <div class="flex justify-between items-center mb-4 flex-wrap gap-3 border-b pb-3">
-                <h3 class="font-bold text-lg text-indigo-600">
-                    <i class="fas fa-trophy text-yellow-500"></i> TOP SẢN PHẨM BÁN CHẠY
+        <!-- TOP SẢN PHẨM BÁN CHẠY -->
+        <div class="glass-card p-5 mt-6 glow-accent">
+            <div class="flex flex-wrap justify-between items-center mb-4 gap-3">
+                <h3 class="font-bold text-lg text-yellow-400 flex items-center gap-2">
+                    <i class="fas fa-trophy text-yellow-400"></i> TOP SẢN PHẨM BÁN CHẠY
                 </h3>
                 <div class="flex gap-2">
-                    <select id="chartType" onchange="updateChart()" class="text-sm border rounded-lg px-3 py-1.5 bg-gray-50">
+                    <select id="chartType" onchange="updateChart()" class="bg-slate-800/50 border border-slate-700 rounded-xl px-3 py-1.5 text-sm text-slate-300 focus:border-purple-500 focus:outline-none">
                         <option value="product">📦 Sản phẩm</option>
                         <option value="combo">🎁 Combo</option>
                         <option value="all">📊 Tất cả</option>
                     </select>
-                    <select id="chartLimit" onchange="updateChart()" class="text-sm border rounded-lg px-3 py-1.5 bg-gray-50">
+                    <select id="chartLimit" onchange="updateChart()" class="bg-slate-800/50 border border-slate-700 rounded-xl px-3 py-1.5 text-sm text-slate-300 focus:border-purple-500 focus:outline-none">
                         <option value="5">🏆 Top 5</option>
                         <option value="10">🏆 Top 10</option>
                     </select>
@@ -1017,8 +1013,288 @@
             </div>
             <div id="chartContainer" class="space-y-3 max-h-[400px] overflow-y-auto pr-2"></div>
         </div>
-        <!-- ========== KẾT THÚC BIỂU ĐỒ ========== -->
     </div>
+
+    <!-- MODAL QUẢN LÝ CỬA HÀNG -->
+    <div id="storeModal" class="fixed inset-0 z-[2000] hidden items-center justify-center modal-overlay" onclick="closeStoreModal(event)">
+        <div class="bg-[#131b2e] border border-slate-700/50 rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+            <div class="sticky top-0 bg-[#131b2e] border-b border-slate-700/50 px-6 py-4 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-purple-400 flex items-center gap-2">
+                    <i class="fas fa-store"></i> Quản lý cửa hàng
+                </h2>
+                <button onclick="closeStoreModal()" class="text-2xl text-slate-400 hover:text-slate-300">&times;</button>
+            </div>
+            <div class="p-6 space-y-5">
+                <!-- Logo -->
+                <div class="text-center">
+                    <div class="relative inline-block">
+                        <div class="w-28 h-28 rounded-full bg-slate-800/50 flex items-center justify-center overflow-hidden border-2 border-purple-500/50 mx-auto" id="storeLogoContainer">
+                            <img id="storeLogoPreview" class="w-full h-full object-cover" src="https://picsum.photos/id/100/200/200" onerror="this.src='https://picsum.photos/200/200'">
+                        </div>
+                        <button onclick="document.getElementById('storeLogoInput').click()" class="absolute bottom-0 right-0 bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-purple-500 transition">
+                            <i class="fas fa-camera text-xs"></i>
+                        </button>
+                        <input type="file" id="storeLogoInput" accept="image/*" class="hidden" onchange="handleStoreLogoUpload(event)">
+                    </div>
+                    <p class="text-xs text-slate-500 mt-2">Logo cửa hàng</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Tên cửa hàng *</label>
+                        <input type="text" id="storeName" placeholder="Tên cửa hàng" class="input-dark">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Số điện thoại</label>
+                        <input type="tel" id="storePhone" placeholder="0xx xxx xxxx" class="input-dark">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Email</label>
+                        <input type="email" id="storeEmail" placeholder="store@example.com" class="input-dark">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Website</label>
+                        <input type="url" id="storeWebsite" placeholder="https://..." class="input-dark">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-400 mb-1">Địa chỉ cửa hàng</label>
+                    <textarea id="storeAddress" rows="2" placeholder="Số nhà, đường, phường/xã..." class="input-dark resize-none"></textarea>
+                </div>
+
+                <!-- Thông tin ngân hàng -->
+                <div class="border-t border-slate-700/50 pt-4">
+                    <h3 class="font-semibold mb-3 text-blue-400 flex items-center gap-2">
+                        <i class="fas fa-university"></i> Thông tin nhận thanh toán
+                    </h3>
+                    <div class="grid md:grid-cols-2 gap-3">
+                        <input type="text" id="bankName" placeholder="Tên ngân hàng" class="input-dark">
+                        <input type="text" id="bankAccountNumber" placeholder="Số tài khoản" class="input-dark">
+                        <div class="col-span-2">
+                            <input type="text" id="bankAccountName" placeholder="Tên chủ tài khoản" class="input-dark">
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-2">Thông tin này sẽ hiển thị cho khách hàng khi chọn chuyển khoản</p>
+                </div>
+
+                <!-- Mạng xã hội -->
+                <div class="border-t border-slate-700/50 pt-4">
+                    <h3 class="font-semibold mb-3 text-slate-300 flex items-center gap-2">
+                        <i class="fas fa-share-alt text-blue-400"></i> Mạng xã hội
+                    </h3>
+                    <div class="grid md:grid-cols-2 gap-3">
+                        <div class="flex items-center gap-2">
+                            <i class="fab fa-facebook text-blue-500 w-6 text-center"></i>
+                            <input type="url" id="storeFacebook" placeholder="https://facebook.com/..." class="input-dark">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fab fa-instagram text-pink-500 w-6 text-center"></i>
+                            <input type="url" id="storeInstagram" placeholder="https://instagram.com/..." class="input-dark">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fab fa-youtube text-red-500 w-6 text-center"></i>
+                            <input type="url" id="storeYoutube" placeholder="https://youtube.com/..." class="input-dark">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fab fa-tiktok text-slate-300 w-6 text-center"></i>
+                            <input type="url" id="storeTiktok" placeholder="https://tiktok.com/@" class="input-dark">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fab fa-zalo text-blue-400 w-6 text-center"></i>
+                            <input type="text" id="storeZalo" placeholder="Số điện thoại Zalo" class="input-dark">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-shop text-orange-400 w-6 text-center"></i>
+                            <input type="url" id="storeShopee" placeholder="https://shopee.vn/..." class="input-dark">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trạng thái cửa hàng -->
+                <div class="border-t border-slate-700/50 pt-4">
+                    <h3 class="font-semibold mb-3 text-orange-400 flex items-center gap-2">
+                        <i class="fas fa-store-slash"></i> Trạng thái cửa hàng
+                    </h3>
+                    <div class="flex gap-3 mb-3">
+                        <button onclick="setStoreStatusFromModal('open')" id="modalStatusOpen" class="flex-1 bg-green-600/20 text-green-400 py-2.5 rounded-xl text-sm font-semibold border border-green-500/30 hover:bg-green-600/30 transition">
+                            <i class="fas fa-store"></i> Mở cửa
+                        </button>
+                        <button onclick="setStoreStatusFromModal('temporary')" id="modalStatusTemp" class="flex-1 bg-yellow-600/20 text-yellow-400 py-2.5 rounded-xl text-sm font-semibold border border-yellow-500/30 hover:bg-yellow-600/30 transition">
+                            <i class="fas fa-clock"></i> Tạm đóng
+                        </button>
+                        <button onclick="setStoreStatusFromModal('permanent')" id="modalStatusPerm" class="flex-1 bg-red-600/20 text-red-400 py-2.5 rounded-xl text-sm font-semibold border border-red-500/30 hover:bg-red-600/30 transition">
+                            <i class="fas fa-ban"></i> Đóng vĩnh viễn
+                        </button>
+                    </div>
+                    <p id="storeStatusText" class="text-xs text-slate-500 text-center"></p>
+                </div>
+
+                <!-- Mô tả -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-400 mb-1">Mô tả cửa hàng</label>
+                    <textarea id="storeDescription" rows="3" placeholder="Giới thiệu về cửa hàng..." class="input-dark resize-none"></textarea>
+                </div>
+
+                <div class="flex gap-3 pt-4 border-t border-slate-700/50">
+                    <button onclick="saveStoreInfo()" class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white py-3 rounded-xl font-bold transition flex items-center justify-center gap-2">
+                        <i class="fas fa-save"></i> Lưu thông tin
+                    </button>
+                    <button onclick="closeStoreModal()" class="flex-1 bg-slate-700/50 text-slate-300 py-3 rounded-xl font-semibold transition hover:bg-slate-700">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL XEM BIÊN LAI CHUYỂN KHOẢN -->
+    <div id="viewReceiptModal" class="fixed inset-0 z-[2100] hidden items-center justify-center modal-overlay" onclick="closeViewReceiptModal(event)">
+        <div class="bg-[#131b2e] border border-slate-700/50 rounded-2xl max-w-lg w-full mx-4 overflow-hidden" onclick="event.stopPropagation()">
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i class="fas fa-receipt"></i> Biên lai chuyển khoản
+                </h2>
+                <button onclick="closeViewReceiptModal()" class="text-white text-2xl hover:text-slate-200">&times;</button>
+            </div>
+            <div class="p-6">
+                <div class="text-center">
+                    <img id="receiptFullImage" src="" class="max-w-full max-h-96 object-contain rounded-lg mx-auto">
+                </div>
+                <div class="bg-slate-800/50 rounded-lg p-3 mt-4 text-sm text-slate-400">
+                    <i class="fas fa-info-circle text-blue-400"></i> Vui lòng kiểm tra ảnh biên lai và xác nhận thanh toán.
+                </div>
+                <div class="flex gap-3 mt-5">
+                    <button onclick="approvePayment()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-semibold transition flex items-center justify-center gap-2">
+                        <i class="fas fa-check-circle"></i> Xác nhận đã nhận tiền
+                    </button>
+                    <button onclick="closeViewReceiptModal()" class="flex-1 bg-slate-700/50 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl font-semibold transition">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL XEM YÊU CẦU TRẢ HÀNG -->
+<div id="returnRequestModal" class="fixed inset-0 z-[2000] hidden items-center justify-center modal-overlay" onclick="closeReturnRequestModal(event)">
+    <div class="bg-[#131b2e] border border-slate-700/50 rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div class="sticky top-0 bg-[#131b2e] border-b border-slate-700/50 px-6 py-4 flex justify-between items-center">
+            <h2 class="text-xl font-bold text-orange-400 flex items-center gap-2">
+                <i class="fas fa-undo-alt"></i> Xử lý yêu cầu trả hàng
+            </h2>
+            <button onclick="closeReturnRequestModal()" class="text-2xl text-slate-400 hover:text-slate-300">&times;</button>
+        </div>
+        <div class="p-6 space-y-5">
+            <!-- Thông tin đơn hàng -->
+            <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
+                <h3 class="font-semibold text-sm text-slate-400 mb-2">📋 Thông tin đơn hàng</h3>
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div><span class="text-slate-500">Mã đơn:</span> <span class="font-medium text-slate-300" id="returnRequestOrderId"></span></div>
+                    <div><span class="text-slate-500">Ngày đặt:</span> <span id="returnRequestDate" class="text-slate-300"></span></div>
+                    <div><span class="text-slate-500">Khách hàng:</span> <span id="returnRequestCustomerName" class="text-slate-300"></span></div>
+                    <div><span class="text-slate-500">SĐT:</span> <span id="returnRequestCustomerPhone" class="text-slate-300"></span></div>
+                    <div class="col-span-2"><span class="text-slate-500">Địa chỉ:</span> <span id="returnRequestCustomerAddress" class="text-slate-300"></span></div>
+                    <div><span class="text-slate-500">Tổng tiền:</span> <span class="font-bold text-emerald-400" id="returnRequestTotal"></span>đ</div>
+                </div>
+            </div>
+            
+            <input type="hidden" id="returnRequestOrderIdHidden" value="">
+
+            <!-- Lý do trả hàng -->
+            <div class="bg-red-900/20 rounded-xl p-4 border border-red-700/30">
+                <h3 class="font-semibold text-sm text-red-400 mb-2">⚠️ Lý do trả hàng</h3>
+                <div class="text-sm"><span class="text-slate-500">Lý do:</span> <span class="text-slate-300" id="returnRequestReason"></span></div>
+                <div class="text-sm mt-1"><span class="text-slate-500">Mô tả:</span> <span class="text-slate-300" id="returnRequestDescription"></span></div>
+            </div>
+            
+            <!-- Ảnh/Video đính kèm -->
+            <div>
+                <h3 class="font-semibold text-sm text-slate-400 mb-2">📎 Ảnh/Video bóc hàng</h3>
+                <div id="returnRequestFiles" class="flex flex-wrap gap-2"></div>
+            </div>
+            
+            <!-- Thông tin tài khoản ngân hàng -->
+            <div class="border-t border-slate-700/50 pt-4">
+                <h3 class="font-semibold text-sm text-blue-400 mb-2"><i class="fas fa-university"></i> Thông tin tài khoản hoàn tiền (khách hàng cung cấp)</h3>
+                <div class="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 space-y-2">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs text-slate-500">Tên ngân hàng</label>
+                            <p class="font-medium text-slate-300" id="displayBankName">---</p>
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-500">Số tài khoản</label>
+                            <p class="font-medium text-slate-300" id="displayAccountNumber">---</p>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="text-xs text-slate-500">Tên chủ tài khoản</label>
+                            <p class="font-medium text-slate-300" id="displayAccountName">---</p>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="returnBankName" value="">
+                <input type="hidden" id="returnAccountNumber" value="">
+                <input type="hidden" id="returnAccountName" value="">
+            </div>
+            
+            <!-- Nút xử lý -->
+            <div class="flex gap-3 pt-2 border-t border-slate-700/50">
+                <button onclick="confirmRefund()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2">
+                    <i class="fas fa-money-bill-wave"></i> Xác nhận hoàn tiền
+                </button>
+                <button onclick="rejectReturnRequest()" class="flex-1 bg-red-600/20 hover:bg-red-600/30 text-red-400 py-3 rounded-xl font-semibold transition border border-red-500/30 flex items-center justify-center gap-2">
+                    <i class="fas fa-times"></i> Từ chối trả hàng
+                </button>
+            </div>
+            <p class="text-xs text-slate-500 text-center">Sau khi xác nhận hoàn tiền, số tiền sẽ được chuyển vào tài khoản khách hàng</p>
+        </div>
+    </div>
+</div>
+
+    <!-- MODAL PREVIEW ẢNH/VIDEO -->
+<div id="filePreviewModal" class="fixed inset-0 z-[2100] hidden items-center justify-center modal-overlay" onclick="closeFilePreview()">
+    <div class="bg-[#131b2e] border border-slate-700/50 rounded-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-auto p-4" onclick="event.stopPropagation()">
+        <div class="flex justify-end mb-2">
+            <button onclick="closeFilePreview()" class="text-2xl text-slate-400 hover:text-slate-300">&times;</button>
+        </div>
+        <div id="filePreviewContent" class="flex items-center justify-center min-h-[300px]"></div>
+    </div>
+</div>
+
+    <!-- Nút chat -->
+    <div id="chatButton" class="chat-button" onclick="toggleChatDrawer()">
+        <i class="fas fa-comment-dots"></i>
+        <span id="chatBadge" class="chat-badge hidden">0</span>
+    </div>
+
+    <!-- Chat drawer -->
+    <div id="chatDrawer" class="chat-drawer hidden">
+        <div class="chat-header" onclick="toggleChatDrawer()">
+            <h3><i class="fas fa-comment-dots"></i> Tin nhắn khách hàng</h3>
+            <i class="fas fa-times" onclick="event.stopPropagation(); toggleChatDrawer()"></i>
+        </div>
+        <div class="flex h-full">
+            <!-- Danh sách phòng chat -->
+            <div class="w-1/3 border-r border-slate-700/50 flex flex-col">
+                <div class="p-2 border-b border-slate-700/50">
+                    <input type="text" id="searchChatRoom" placeholder="Tìm kiếm..." class="input-dark text-xs py-1.5">
+                </div>
+                <div id="chatRoomList" class="flex-1 overflow-y-auto p-1 space-y-0.5"></div>
+            </div>
+            <!-- Nội dung chat -->
+            <div class="flex-1 flex flex-col">
+                <div class="px-3 py-2 border-b border-slate-700/50 flex items-center gap-2">
+                    <i class="fas fa-user-circle text-purple-400"></i>
+                    <span id="chatRoomTitle" class="font-medium text-sm text-slate-300">Chọn khách hàng</span>
+                </div>
+                <div id="chatMessagesList" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
+                <div class="p-2 border-t border-slate-700/50 flex gap-2">
+                    <input type="text" id="chatInputMessage" placeholder="Nhập tin nhắn..." class="flex-1 input-dark text-sm py-2 px-3" onkeypress="if(event.key==='Enter') sendDashboardMessage()">
+                    <button onclick="sendDashboardMessage()" class="bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl px-4 py-2 hover:scale-105 transition">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="toastContainer"></div>
 
     <script>
@@ -2106,26 +2382,19 @@ function calculateSoldStats() {
     let needList = [];
     
     storeData.products.forEach(p => {
-        // ========== XỬ LÝ SẢN PHẨM CÓ THUỘC TÍNH (ATTRIBUTES) ==========
+        // Xử lý sản phẩm có attributes
         if(p.attributes && p.attributes.length > 0) {
-            // Duyệt qua từng thuộc tính của sản phẩm
             p.attributes.forEach(attr => {
-                // Duyệt qua từng giá trị của thuộc tính
                 attr.options.forEach(option => {
-                    // Lấy số lượng đã bán theo thuộc tính + giá trị
                     let soldCount = 0;
                     let stockCount = 0;
                     
-                    // Nếu có soldByAttributes (cấu trúc mới)
                     if(p.soldByAttributes && p.soldByAttributes[attr.name] && p.soldByAttributes[attr.name][option]) {
                         soldCount = p.soldByAttributes[attr.name][option];
-                    }
-                    // Fallback: nếu vẫn dùng soldByFlavor cũ
-                    else if(p.soldByFlavor && p.soldByFlavor[option]) {
+                    } else if(p.soldByFlavor && p.soldByFlavor[option]) {
                         soldCount = p.soldByFlavor[option];
                     }
                     
-                    // Lấy tồn kho theo thuộc tính
                     if(p.stockByAttributes && p.stockByAttributes[attr.name] && p.stockByAttributes[attr.name][option]) {
                         stockCount = p.stockByAttributes[attr.name][option];
                     } else if(p.stockByFlavor && p.stockByFlavor[option]) {
@@ -2148,7 +2417,7 @@ function calculateSoldStats() {
                 });
             });
         }
-        // Xử lý sản phẩm có flavor (cũ) - tương thích ngược
+        // Xử lý sản phẩm có flavor
         else if(p.flavor && p.flavor.trim()) {
             let flavors = p.flavor.split(',').map(f => f.trim()).filter(f => f);
             flavors.forEach(flavor => {
@@ -2190,39 +2459,46 @@ function calculateSoldStats() {
     });
     
     if(needList.length === 0) {
-        html = '<div class="text-center py-6 text-slate-400 bg-slate-50 rounded-lg">🎉 Tất cả sản phẩm đều đủ hàng! Không cần nhập thêm.</div>';
+        html = `
+            <div class="text-center py-8 text-slate-400 bg-slate-800/30 rounded-xl border border-slate-700/50">
+                <i class="fas fa-check-circle text-emerald-400 text-3xl block mb-3"></i>
+                <p class="font-medium">🎉 Tất cả sản phẩm đều đủ hàng!</p>
+                <p class="text-sm text-slate-500 mt-1">Không cần nhập thêm.</p>
+            </div>
+        `;
     } else {
         html = `
-            <table class="w-full text-sm border-collapse">
-                <thead class="bg-slate-100 sticky top-0">
-                    <tr class="border-b">
-                        <th class="text-left py-2 px-2">📦 Sản phẩm</th>
-                        <th class="text-left py-2 px-2">🏷️ Thuộc tính</th>
-                        <th class="text-left py-2 px-2">🎯 Giá trị</th>
-                        <th class="text-center py-2 px-2">📦 Tồn</th>
-                        <th class="text-center py-2 px-2">🛒 Đã bán</th>
-                        <th class="text-center py-2 px-2 text-red-600">⚠️ Cần nhập</th>
-                        <th class="text-center py-2 px-2">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
+            <div class="bg-slate-800/30 rounded-xl border border-slate-700/50 overflow-hidden">
+                <table class="w-full text-sm border-collapse">
+                    <thead class="bg-slate-800/50 sticky top-0">
+                        <tr class="border-b border-slate-700/50">
+                            <th class="text-left py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">📦 Sản phẩm</th>
+                            <th class="text-left py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">🏷️ Thuộc tính</th>
+                            <th class="text-left py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">🎯 Giá trị</th>
+                            <th class="text-center py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">📦 Tồn</th>
+                            <th class="text-center py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">🛒 Đã bán</th>
+                            <th class="text-center py-2 px-3 text-xs font-semibold text-red-400 uppercase tracking-wider">⚠️ Cần nhập</th>
+                            <th class="text-center py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
         `;
         
         needList.forEach(item => {
             let statusIcon = item.stock === 0 ? '🔴' : (item.need > 10 ? '🟠' : '🟡');
-            let attrDisplay = item.attributeName ? `<span class="badge-info px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700">${item.attributeName}</span>` : '<span class="text-slate-400">—</span>';
-            let valueDisplay = item.attributeValue ? `<span class="badge-warning px-2 py-1 rounded-full text-xs bg-amber-100 text-amber-700">${item.attributeValue}</span>` : '<span class="text-slate-400">—</span>';
+            let attrDisplay = item.attributeName ? `<span class="badge-info bg-blue-500/10 text-blue-300 px-2 py-0.5 rounded-full text-xs border border-blue-500/20">${item.attributeName}</span>` : '<span class="text-slate-500">—</span>';
+            let valueDisplay = item.attributeValue ? `<span class="badge-warning bg-amber-500/10 text-amber-300 px-2 py-0.5 rounded-full text-xs border border-amber-500/20">${item.attributeValue}</span>` : '<span class="text-slate-500">—</span>';
             
             html += `
-                <tr class="border-b hover:bg-slate-50">
-                    <td class="py-2 px-2 font-medium">${statusIcon} ${item.productName}</td>
-                    <td class="py-2 px-2">${attrDisplay}</td>
-                    <td class="py-2 px-2">${valueDisplay}</td>
-                    <td class="py-2 px-2 text-center ${item.stock === 0 ? 'text-red-600 font-bold' : ''}">${item.stock}</td>
-                    <td class="py-2 px-2 text-center font-medium">${item.sold}</td>
-                    <td class="py-2 px-2 text-center text-red-600 font-bold text-base">${item.need}</td>
-                    <td class="py-2 px-2 text-center">
-                        <button onclick="quickImportByAttribute('${item.productId}', '${item.attributeName || ''}', '${item.attributeValue || ''}', ${item.need})" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs transition">
+                <tr class="border-b border-slate-700/30 hover:bg-slate-800/30 transition">
+                    <td class="py-2 px-3 font-medium text-slate-300">${statusIcon} ${item.productName}</td>
+                    <td class="py-2 px-3">${attrDisplay}</td>
+                    <td class="py-2 px-3">${valueDisplay}</td>
+                    <td class="py-2 px-3 text-center ${item.stock === 0 ? 'text-red-400 font-bold' : 'text-slate-300'}">${item.stock}</td>
+                    <td class="py-2 px-3 text-center font-medium text-slate-300">${item.sold}</td>
+                    <td class="py-2 px-3 text-center text-red-400 font-bold text-base">${item.need}</td>
+                    <td class="py-2 px-3 text-center">
+                        <button onclick="quickImportByAttribute('${item.productId}', '${item.attributeName || ''}', '${item.attributeValue || ''}', ${item.need})" class="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 px-3 py-1.5 rounded-lg text-xs transition border border-emerald-500/20">
                             <i class="fas fa-truck"></i> Nhập ${item.need}
                         </button>
                     </td>
@@ -2233,15 +2509,16 @@ function calculateSoldStats() {
         let totalNeed = needList.reduce((sum, item) => sum + item.need, 0);
         
         html += `
-                </tbody>
-                <tfoot class="bg-slate-100 sticky bottom-0 border-t-2">
-                    <tr class="border-t">
-                        <td colspan="5" class="py-2 px-2 text-right font-bold">📊 Tổng cần nhập:</td>
-                        <td class="py-2 px-2 text-center font-bold text-red-600 text-lg">${totalNeed}</td>
-                        <td class="py-2 px-2"></td>
-                    </tr>
-                </tfoot>
-            </table>
+                    </tbody>
+                    <tfoot class="bg-slate-800/50 sticky bottom-0 border-t border-slate-700/50">
+                        <tr>
+                            <td colspan="5" class="py-2 px-3 text-right font-bold text-slate-300">📊 Tổng cần nhập:</td>
+                            <td class="py-2 px-3 text-center font-bold text-red-400 text-lg">${totalNeed}</td>
+                            <td class="py-2 px-3"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         `;
     }
     document.getElementById('stockSummary').innerHTML = html;
@@ -3409,22 +3686,28 @@ function renderOrders() {
         function logout() { localStorage.removeItem('currentUser'); window.location.href = 'index.html'; }
         
         function showTab(tab) {
-            document.getElementById('productsTab').classList.add('hidden');
-            document.getElementById('combosTab').classList.add('hidden');
-            document.getElementById('inventoryTab').classList.add('hidden');
-            document.getElementById('ordersTab').classList.add('hidden');
-            if(tab === 'products') document.getElementById('productsTab').classList.remove('hidden');
-            if(tab === 'combos') document.getElementById('combosTab').classList.remove('hidden');
-            if(tab === 'inventory') document.getElementById('inventoryTab').classList.remove('hidden');
-            if(tab === 'orders') document.getElementById('ordersTab').classList.remove('hidden');
-            
-            let tabs = ['products', 'combos', 'inventory', 'orders'];
-            tabs.forEach(t => { 
-                let btn = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`);
-                if(btn) btn.className = t === tab ? 'px-5 py-2 rounded-full font-semibold bg-indigo-600 text-white' : 'px-5 py-2 rounded-full font-semibold bg-white text-slate-700 border';
-            });
-            if(tab === 'inventory') renderStockSummary();
+    document.getElementById('productsTab').classList.add('hidden');
+    document.getElementById('combosTab').classList.add('hidden');
+    document.getElementById('inventoryTab').classList.add('hidden');
+    document.getElementById('ordersTab').classList.add('hidden');
+    if(tab === 'products') document.getElementById('productsTab').classList.remove('hidden');
+    if(tab === 'combos') document.getElementById('combosTab').classList.remove('hidden');
+    if(tab === 'inventory') document.getElementById('inventoryTab').classList.remove('hidden');
+    if(tab === 'orders') document.getElementById('ordersTab').classList.remove('hidden');
+    
+    let tabs = ['products', 'combos', 'inventory', 'orders'];
+    tabs.forEach(t => { 
+        let btn = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        if(btn) {
+            if (t === tab) {
+                btn.className = 'tab-active px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2';
+            } else {
+                btn.className = 'tab-inactive px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2';
+            }
         }
+    });
+    if(tab === 'inventory') renderStockSummary();
+}
 
         function showToast(msg, type) { 
             let toast = document.createElement('div'); 
@@ -3456,24 +3739,24 @@ function renderOrders() {
             }
             
             container.innerHTML = currentAttributes.map(attr => `
-                <div class="attribute-item">
+                <div class="attribute-item bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
                     <div class="flex gap-2 mb-2">
                         <input type="text" placeholder="Tên thuộc tính (VD: Vị, Màu sắc, Size, Dung lượng)" 
-                            class="flex-1 p-2 border rounded-lg text-sm" 
+                            class="flex-1 input-dark text-sm" 
                             value="${escapeHtml(attr.name)}"
                             onchange="updateAttributeName(${attr.id}, this.value)">
-                        <button onclick="removeAttribute(${attr.id})" class="text-red-500 text-sm px-3 bg-red-50 rounded-lg">
+                        <button onclick="removeAttribute(${attr.id})" class="text-red-400 hover:text-red-300 text-sm px-4 bg-red-500/10 rounded-lg border border-red-500/20 transition">
                             <i class="fas fa-trash"></i> Xóa
                         </button>
                     </div>
                     <div class="pl-2">
-                        <label class="text-xs text-slate-500 block mb-1">Các giá trị (cách nhau bằng dấu phẩy):</label>
+                        <label class="text-xs text-slate-400 block mb-1">Các giá trị (cách nhau bằng dấu phẩy):</label>
                         <input type="text" placeholder="VD: Đỏ, Xanh, Vàng" 
-                            class="w-full p-2 border rounded-lg text-sm"
+                            class="w-full input-dark text-sm"
                             value="${attr.options.join(', ')}"
                             onchange="updateAttributeOptions(${attr.id}, this.value)">
                         <div class="flex flex-wrap gap-1 mt-2">
-                            ${attr.options.map(opt => `<span class="attribute-tag"><i class="fas fa-tag"></i> ${escapeHtml(opt)}</span>`).join('')}
+                            ${attr.options.map(opt => `<span class="attribute-tag bg-purple-500/10 text-purple-300 px-2 py-0.5 rounded-full text-xs border border-purple-500/20"><i class="fas fa-tag text-purple-400"></i> ${escapeHtml(opt)}</span>`).join('')}
                         </div>
                     </div>
                 </div>
@@ -3942,27 +4225,25 @@ function updateChatBadge() {
 
     <!-- MODAL XEM BIÊN LAI CHUYỂN KHOẢN -->
 <div id="viewReceiptModal" class="fixed inset-0 z-[2100] hidden items-center justify-center modal-overlay" onclick="closeViewReceiptModal(event)">
-    <div class="bg-white rounded-2xl max-w-lg w-full mx-4 overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
+    <div class="bg-[#131b2e] border border-slate-700/50 rounded-2xl max-w-lg w-full mx-4 overflow-hidden" onclick="event.stopPropagation()">
         <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex justify-between items-center">
-            <h2 class="text-xl font-bold text-white">
-                <i class="fas fa-receipt mr-2"></i> BIÊN LAI CHUYỂN KHOẢN
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-receipt"></i> BIÊN LAI CHUYỂN KHOẢN
             </h2>
-            <button onclick="closeViewReceiptModal()" class="text-white text-2xl hover:text-gray-200">&times;</button>
+            <button onclick="closeViewReceiptModal()" class="text-white text-2xl hover:text-slate-200">&times;</button>
         </div>
         <div class="p-6">
             <div id="receiptImageView" class="text-center">
                 <img id="receiptFullImage" src="" class="max-w-full max-h-96 object-contain rounded-lg mx-auto">
             </div>
-            <div class="mt-4 bg-gray-50 rounded-lg p-3">
-                <p class="text-sm text-gray-600"><i class="fas fa-info-circle text-blue-500"></i> Vui lòng kiểm tra ảnh biên lai và xác nhận thanh toán cho khách hàng.</p>
+            <div class="bg-slate-800/50 rounded-lg p-3 mt-4 text-sm text-slate-400">
+                <i class="fas fa-info-circle text-blue-400"></i> Vui lòng kiểm tra ảnh biên lai và xác nhận thanh toán cho khách hàng.
             </div>
             <div class="flex gap-3 mt-5">
-                <button onclick="approvePayment()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg font-semibold transition">
+                <button onclick="approvePayment()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-semibold transition flex items-center justify-center gap-2">
                     <i class="fas fa-check-circle"></i> Xác nhận đã nhận tiền
                 </button>
-                <button onclick="closeViewReceiptModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold transition">
-                    Đóng
-                </button>
+                <button onclick="closeViewReceiptModal()" class="flex-1 bg-slate-700/50 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl font-semibold transition">Đóng</button>
             </div>
         </div>
     </div>

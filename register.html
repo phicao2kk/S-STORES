@@ -5,6 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng ký / Đăng nhập - S-STORES</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              game: {
+                bg: '#0b0f19',
+                card: '#131b2e',
+                hover: '#1e293b',
+                border: '#1f2937',
+                primary: '#8b5cf6',
+                secondary: '#10b981',
+                accent: '#ec4899'
+              }
+            },
+            fontFamily: {
+              sans: ['Outfit', 'Inter', 'sans-serif']
+            }
+          }
+        }
+      }
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
     <!-- Firebase -->
@@ -12,6 +34,11 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        
+        body {
+            font-family: 'Outfit', 'Inter', sans-serif;
+        }
         .password-wrapper {
             position: relative;
         }
@@ -21,11 +48,14 @@
             top: 50%;
             transform: translateY(-50%);
             cursor: pointer;
-            color: #9ca3af;
+            color: #6b7280;
             transition: color 0.2s;
         }
         .toggle-password:hover {
-            color: #6366f1;
+            color: #8b5cf6;
+        }
+        .shadow-glow-purple {
+            box-shadow: 0 0 20px -3px rgba(139, 92, 246, 0.3);
         }
     </style>
 
@@ -46,46 +76,50 @@
         const db = firebase.database();
     </script>
 </head>
-<body class="bg-gradient-to-br from-indigo-50 to-sky-100 min-h-screen flex items-center justify-center p-4">
-    <div class="max-w-md w-full">
+<body class="bg-game-bg text-slate-100 min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+    <!-- Decorative background glows -->
+    <div class="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-game-primary/10 blur-[100px] pointer-events-none"></div>
+    <div class="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-game-accent/5 blur-[120px] pointer-events-none"></div>
+
+    <div class="max-w-md w-full relative z-10">
         <div class="text-center mb-8">
-            <a href="index.html" class="text-3xl font-bold text-indigo-600">S-STORES</a>
-            <p class="text-slate-500 mt-2">Đăng ký / Đăng nhập bằng Email hoặc SĐT</p>
+            <a href="index.html" class="inline-flex items-center gap-2 text-3xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-game-primary via-purple-400 to-game-accent">S-STORES</a>
+            <p class="text-slate-400 mt-2 text-sm">Đăng ký / Đăng nhập bằng Email hoặc SĐT</p>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-xl p-8">
-            <div class="flex gap-4 mb-6">
-                <button id="btnRegister" class="flex-1 py-2 font-semibold text-indigo-600 border-b-2 border-indigo-600">Đăng ký</button>
-                <button id="btnLogin" class="flex-1 py-2 font-semibold text-slate-400">Đăng nhập</button>
+        <div class="bg-game-card border border-game-border shadow-glow-purple rounded-2xl p-8">
+            <div class="flex gap-4 mb-6 border-b border-game-border pb-1">
+                <button id="btnRegister" class="flex-1 py-2 font-black text-game-primary border-b-2 border-game-primary transition uppercase tracking-wider text-sm">Đăng ký</button>
+                <button id="btnLogin" class="flex-1 py-2 font-black text-slate-500 hover:text-slate-300 transition uppercase tracking-wider text-sm">Đăng nhập</button>
             </div>
 
             <!-- ĐĂNG KÝ FORM -->
             <div id="registerForm">
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium mb-1">Tên cửa hàng *</label>
-                        <input type="text" id="regStoreName" placeholder="VD: Coffee Shop ABC" class="w-full p-3 border rounded-xl">
-                        <p class="text-xs text-slate-400 mt-1">Tên cửa hàng sẽ hiển thị trên link và giao diện</p>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Tên cửa hàng *</label>
+                        <input type="text" id="regStoreName" placeholder="VD: Coffee Shop ABC" class="w-full p-3 bg-game-bg border border-game-border focus:border-game-primary text-white rounded-xl outline-none transition">
+                        <p class="text-[10px] text-slate-500 mt-1">Tên cửa hàng sẽ hiển thị trên link và giao diện</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">Email hoặc Số điện thoại *</label>
-                        <input type="text" id="regUsername" placeholder="Email hoặc SĐT (VD: 0987654321 hoặc shop@email.com)" class="w-full p-3 border rounded-xl">
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Email hoặc Số điện thoại *</label>
+                        <input type="text" id="regUsername" placeholder="Email hoặc SĐT (VD: 0987654321)" class="w-full p-3 bg-game-bg border border-game-border focus:border-game-primary text-white rounded-xl outline-none transition">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">Mật khẩu *</label>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Mật khẩu *</label>
                         <div class="password-wrapper">
-                            <input type="password" id="regPassword" placeholder="••••••••" class="w-full p-3 border rounded-xl pr-10">
+                            <input type="password" id="regPassword" placeholder="••••••••" class="w-full p-3 bg-game-bg border border-game-border focus:border-game-primary text-white rounded-xl pr-10 outline-none transition">
                             <i class="fas fa-eye-slash toggle-password" data-target="regPassword"></i>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">Xác nhận mật khẩu *</label>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Xác nhận mật khẩu *</label>
                         <div class="password-wrapper">
-                            <input type="password" id="regConfirmPassword" placeholder="••••••••" class="w-full p-3 border rounded-xl pr-10">
+                            <input type="password" id="regConfirmPassword" placeholder="••••••••" class="w-full p-3 bg-game-bg border border-game-border focus:border-game-primary text-white rounded-xl pr-10 outline-none transition">
                             <i class="fas fa-eye-slash toggle-password" data-target="regConfirmPassword"></i>
                         </div>
                     </div>
-                    <button onclick="register()" id="registerBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold transition">🚀 Tạo cửa hàng</button>
+                    <button onclick="register()" id="registerBtn" class="w-full bg-gradient-to-r from-game-primary to-indigo-600 hover:from-game-primary hover:to-game-accent text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-sm transition duration-300 transform hover:scale-[1.02] shadow-glow-purple mt-4">🚀 Tạo cửa hàng</button>
                 </div>
             </div>
 
@@ -93,17 +127,17 @@
             <div id="loginForm" class="hidden">
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium mb-1">Email hoặc Số điện thoại</label>
-                        <input type="text" id="loginUsername" placeholder="Email hoặc SĐT" class="w-full p-3 border rounded-xl">
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Email hoặc Số điện thoại</label>
+                        <input type="text" id="loginUsername" placeholder="Email hoặc SĐT" class="w-full p-3 bg-game-bg border border-game-border focus:border-game-primary text-white rounded-xl outline-none transition">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">Mật khẩu</label>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Mật khẩu</label>
                         <div class="password-wrapper">
-                            <input type="password" id="loginPassword" placeholder="••••••••" class="w-full p-3 border rounded-xl pr-10">
+                            <input type="password" id="loginPassword" placeholder="••••••••" class="w-full p-3 bg-game-bg border border-game-border focus:border-game-primary text-white rounded-xl pr-10 outline-none transition">
                             <i class="fas fa-eye-slash toggle-password" data-target="loginPassword"></i>
                         </div>
                     </div>
-                    <button onclick="login()" id="loginBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold transition">🔐 Đăng nhập</button>
+                    <button onclick="login()" id="loginBtn" class="w-full bg-gradient-to-r from-game-primary to-indigo-600 hover:from-game-primary hover:to-game-accent text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-sm transition duration-300 transform hover:scale-[1.02] shadow-glow-purple mt-4">🔐 Đăng nhập</button>
                 </div>
             </div>
         </div>
@@ -130,7 +164,7 @@
         // ==================== HÀM TIỆN ÍCH ====================
         function showToast(msg, type) {
             let toast = document.createElement('div');
-            toast.className = `fixed bottom-5 right-5 z-50 px-4 py-2 rounded-lg text-white text-sm ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} transition-opacity duration-300`;
+            toast.className = `fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl text-white text-xs font-bold uppercase tracking-wider ${type === 'success' ? 'bg-game-secondary shadow-glow-green' : 'bg-game-accent'} transition-opacity duration-300`;
             toast.innerText = msg;
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
@@ -249,10 +283,10 @@
                 
                 document.getElementById('registerForm').classList.add('hidden');
                 document.getElementById('loginForm').classList.remove('hidden');
-                document.getElementById('btnRegister').classList.remove('text-indigo-600', 'border-indigo-600');
-                document.getElementById('btnRegister').classList.add('text-slate-400');
-                document.getElementById('btnLogin').classList.add('text-indigo-600', 'border-indigo-600');
-                document.getElementById('btnLogin').classList.remove('text-slate-400');
+                document.getElementById('btnRegister').classList.remove('text-game-primary', 'border-game-primary');
+                document.getElementById('btnRegister').classList.add('text-slate-500');
+                document.getElementById('btnLogin').classList.add('text-game-primary', 'border-game-primary');
+                document.getElementById('btnLogin').classList.remove('text-slate-500');
                 
                 document.getElementById('regStoreName').value = '';
                 document.getElementById('regUsername').value = '';
@@ -318,19 +352,19 @@
         document.getElementById('btnRegister').onclick = () => {
             document.getElementById('registerForm').classList.remove('hidden');
             document.getElementById('loginForm').classList.add('hidden');
-            document.getElementById('btnRegister').classList.add('text-indigo-600', 'border-indigo-600');
-            document.getElementById('btnRegister').classList.remove('text-slate-400');
-            document.getElementById('btnLogin').classList.remove('text-indigo-600', 'border-indigo-600');
-            document.getElementById('btnLogin').classList.add('text-slate-400');
+            document.getElementById('btnRegister').classList.add('text-game-primary', 'border-game-primary');
+            document.getElementById('btnRegister').classList.remove('text-slate-500');
+            document.getElementById('btnLogin').classList.remove('text-game-primary', 'border-game-primary');
+            document.getElementById('btnLogin').classList.add('text-slate-500');
         };
         
         document.getElementById('btnLogin').onclick = () => {
             document.getElementById('registerForm').classList.add('hidden');
             document.getElementById('loginForm').classList.remove('hidden');
-            document.getElementById('btnLogin').classList.add('text-indigo-600', 'border-indigo-600');
-            document.getElementById('btnLogin').classList.remove('text-slate-400');
-            document.getElementById('btnRegister').classList.remove('text-indigo-600', 'border-indigo-600');
-            document.getElementById('btnRegister').classList.add('text-slate-400');
+            document.getElementById('btnLogin').classList.add('text-game-primary', 'border-game-primary');
+            document.getElementById('btnLogin').classList.remove('text-slate-500');
+            document.getElementById('btnRegister').classList.remove('text-game-primary', 'border-game-primary');
+            document.getElementById('btnRegister').classList.add('text-slate-500');
         };
 
         // Khởi tạo sự kiện Enter

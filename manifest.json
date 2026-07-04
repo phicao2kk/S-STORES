@@ -1,0 +1,71 @@
+{
+  "name": "S-STORES - Bán hàng online",
+  "short_name": "S-STORES",
+  "description": "Nền tảng bán hàng online miễn phí cho mọi người",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "categories": ["shopping", "business", "ecommerce"],
+  "icons": [
+    {
+      "src": "https://i.ibb.co/dJxJHqB9/logo-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://i.ibb.co/dJxJHqB9/logo-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://i.ibb.co/dJxJHqB9/logo-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "https://i.ibb.co/dJxJHqB9/logo-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://i.ibb.co/dJxJHqB9/screenshot-1.png",
+      "sizes": "1080x1920",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Quản lý cửa hàng",
+      "url": "/dashboard.html",
+      "icons": [
+        {
+          "src": "https://i.ibb.co/dJxJHqB9/logo-icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Cửa hàng",
+      "short_name": "Cửa hàng",
+      "description": "Xem cửa hàng của bạn",
+      "url": "/store.html",
+      "icons": [
+        {
+          "src": "https://i.ibb.co/dJxJHqB9/logo-icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false
+}

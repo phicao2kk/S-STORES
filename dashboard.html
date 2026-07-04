@@ -49,6 +49,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* ===== PWA INSTALL BANNER ===== */
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.5s ease-out forwards;
+        }
+
+        #pwaInstallBanner {
+            z-index: 9999;
+        }
+
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
         * {
@@ -551,6 +564,25 @@
     </style>
 </head>
 <body>
+
+    <!-- ===== PWA INSTALL BANNER ===== -->
+    <div id="pwaInstallBanner" class="hidden fixed bottom-0 left-0 right-0 z-[9999] bg-game-card/95 backdrop-blur-lg border-t-2 border-game-primary shadow-2xl p-4 flex items-center justify-between animate-slide-up">
+        <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-game-primary to-game-accent flex items-center justify-center shadow-glow-purple flex-shrink-0">
+                <i class="fas fa-shopping-bag text-white text-2xl"></i>
+            </div>
+            <div>
+                <p class="font-black text-white text-sm tracking-wider">THÊM S-STORES VÀO MÀN HÌNH CHÍNH</p>
+                <p class="text-xs text-slate-400">Quản lý cửa hàng nhanh chóng như một app thực thụ</p>
+            </div>
+        </div>
+        <div class="flex gap-2 flex-shrink-0">
+            <button onclick="dismissPWAInstall()" class="text-slate-400 hover:text-white text-sm px-3 py-2 rounded-lg transition">Bỏ qua</button>
+            <button onclick="installPWA()" id="pwaInstallBtn" class="bg-gradient-to-r from-game-primary to-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:shadow-glow-purple transition-all duration-300 transform hover:scale-105">
+                <i class="fas fa-download mr-2"></i> Cài đặt
+            </button>
+        </div>
+    </div>
 
     <!-- BACKGROUND GLOW -->
     <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
@@ -4057,6 +4089,57 @@ function renderChart(productsData, combosData, type = 'product', limit = 5) {
     }
 
     </script>
+<script>
+    // ===== PWA INSTALL =====
+    let deferredPrompt = null;
 
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (localStorage.getItem('pwa_banner_dismissed') !== 'true' && 
+            localStorage.getItem('pwa_installed') !== 'true') {
+            const banner = document.getElementById('pwaInstallBanner');
+            if (banner) banner.classList.remove('hidden');
+        }
+    });
+
+    window.addEventListener('appinstalled', () => {
+        const banner = document.getElementById('pwaInstallBanner');
+        if (banner) banner.classList.add('hidden');
+        localStorage.setItem('pwa_installed', 'true');
+        showToast('🎉 S-STORES đã được cài đặt thành công!', 'success');
+    });
+
+    function installPWA() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    const banner = document.getElementById('pwaInstallBanner');
+                    if (banner) banner.classList.add('hidden');
+                    localStorage.setItem('pwa_installed', 'true');
+                }
+                deferredPrompt = null;
+            });
+        } else {
+            showToast('📱 Nhấn vào biểu tượng chia sẻ ở trình duyệt và chọn "Thêm vào màn hình chính"', 'info');
+        }
+    }
+
+    function dismissPWAInstall() {
+        const banner = document.getElementById('pwaInstallBanner');
+        if (banner) banner.classList.add('hidden');
+        localStorage.setItem('pwa_banner_dismissed', 'true');
+    }
+
+    // ===== REGISTER SERVICE WORKER =====
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('✅ Service Worker registered!', reg))
+                .catch(err => console.log('❌ Service Worker registration failed:', err));
+        });
+    }
+    </script>
 </body>
 </html>

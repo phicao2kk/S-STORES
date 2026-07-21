@@ -578,6 +578,24 @@
                 padding: 1rem;
             }
         }
+                /* Combo selector dark theme */
+        #comboProductSelector .combo-cb {
+            accent-color: #8b5cf6;
+        }
+        #comboProductSelector .combo-qty {
+            background-color: #0b0f19 !important;
+            color: #e2e8f0 !important;
+            border-color: #1f2937 !important;
+        }
+        #comboProductSelector .combo-flavor-select {
+            background-color: #0b0f19 !important;
+            color: #e2e8f0 !important;
+            border-color: #1f2937 !important;
+        }
+        #comboProductSelector .combo-flavor-select option {
+            background-color: #131b2e !important;
+            color: #e2e8f0 !important;
+        }
     </style>
 </head>
 <body>
@@ -754,7 +772,7 @@
                         </div>
                         <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
                             <label class="font-semibold text-sm text-slate-300 block mb-2">📦 Chọn sản phẩm lẻ</label>
-                            <div id="comboProductSelector" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                            <div id="comboProductSelector" class="space-y-1 max-h-48 overflow-y-auto bg-[#0b0f19]/50 rounded-lg p-2"></div>
                         </div>
                         <button onclick="createCombo()" class="btn-primary w-full py-3 flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
                             <i class="fas fa-magic"></i> Tạo combo
@@ -3032,7 +3050,7 @@ function renderChart(productsData, combosData, type = 'product', limit = 5) {
             let flavors = (p.flavor && p.flavor.trim()) ? p.flavor.split(',').map(f => f.trim()).filter(f => f) : [];
             let flavorHtml = flavors.length > 0 ? `
                 <div class="mt-1 ml-6">
-                    <select data-flavor-id="${p.id}" class="combo-flavor-select" onchange="updateComboItemFlavor(${p.id}, this.value)">
+                    <select data-flavor-id="${p.id}" class="combo-flavor-select w-full bg-[#0b0f19] border border-slate-700/50 rounded-lg px-2 py-1 text-xs text-slate-300 focus:border-purple-500 focus:outline-none transition" onchange="updateComboItemFlavor(${p.id}, this.value)">
                         <option value="">-- Chọn vị mặc định --</option>
                         ${flavors.map(f => `<option value="${f}">🍽️ ${f}</option>`).join('')}
                     </select>
@@ -3040,10 +3058,10 @@ function renderChart(productsData, combosData, type = 'product', limit = 5) {
             ` : `<input type="hidden" data-flavor-id="${p.id}" class="combo-flavor-select" value="">`;
             
             container.innerHTML += `
-                <div class="flex items-center gap-2 py-1 border-b pb-1">
-                    <input type="checkbox" value="${p.id}" class="combo-cb w-4 h-4">
-                    <span class="text-sm flex-1">${escapeHtml(p.name)}${p.flavor ? `<span class="flavor-badge ml-2"><i class="fas fa-tag"></i> ${p.flavor}</span>` : ''}</span>
-                    <input type="number" data-id="${p.id}" class="combo-qty w-16 p-1 border rounded text-sm text-center" min="1" value="1">
+                <div class="flex items-center gap-2 py-2 px-2 border-b border-slate-700/50 hover:bg-slate-800/30 rounded-lg transition">
+                    <input type="checkbox" value="${p.id}" class="combo-cb w-4 h-4 accent-purple-500 cursor-pointer">
+                    <span class="text-sm flex-1 text-slate-200">${escapeHtml(p.name)}${p.flavor ? `<span class="flavor-badge ml-2 text-xs text-slate-400"><i class="fas fa-tag"></i> ${p.flavor}</span>` : ''}</span>
+                    <input type="number" data-id="${p.id}" class="combo-qty w-14 p-1 bg-[#0b0f19] border border-slate-700/50 rounded-lg text-sm text-center text-slate-200" min="1" value="1">
                 </div>
                 ${flavorHtml}
             `;

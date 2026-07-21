@@ -1727,7 +1727,18 @@ function updateCartDisplay() {
 
         function removeCartItem(index) { cart.splice(index, 1); saveCart(); updateCartDisplay(); }
 
-        function toggleCart() { let drawer = document.getElementById('cartDrawer'); drawer.classList.toggle('hidden'); if(!drawer.classList.contains('hidden')) updateCartDisplay(); }
+        function toggleCart() { 
+            let drawer = document.getElementById('cartDrawer'); 
+            if (drawer) {
+                drawer.classList.toggle('active');
+                if (!drawer.classList.contains('active')) {
+                    drawer.classList.add('hidden');
+                } else {
+                    drawer.classList.remove('hidden');
+                }
+                if (!drawer.classList.contains('hidden')) updateCartDisplay(); 
+            }
+        }
 
         // ==================== LỊCH SỬ ĐƠN HÀNG ====================
         function toggleOrderHistory() { renderOrderHistory(); document.getElementById('orderHistoryModal').classList.remove('hidden'); document.getElementById('orderHistoryModal').classList.add('flex'); }

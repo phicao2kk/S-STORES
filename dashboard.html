@@ -173,6 +173,7 @@
         .table-dark {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
             min-width: 1200px;
         }
         .table-dark th {
@@ -816,12 +817,12 @@
                         </h3>
                         <div id="stockSummary" class="space-y-2 max-h-80 overflow-y-auto"></div>
                     </div>
-                    <div class="glass-card overflow-hidden glow-accent">
-                        <div class="bg-slate-800/30 px-5 py-3 border-b border-slate-700/50 flex justify-between items-center">
+                    <div class="glass-card overflow-hidden glow-accent flex flex-col">
+                        <div class="bg-slate-800/30 px-5 py-3 border-b border-slate-700/50 flex justify-between items-center flex-shrink-0">
                             <h3 class="font-bold text-slate-300"><i class="fas fa-history mr-2 text-emerald-400"></i> Lịch sử nhập hàng</h3>
                             <button onclick="clearImportHistory()" class="text-xs text-red-400 hover:text-red-300 transition">Xóa lịch sử</button>
                         </div>
-                        <div class="table-container">
+                        <div class="flex-1 overflow-y-auto max-h-[300px]">
                             <table class="table-dark">
                                 <thead>
                                     <tr>
@@ -2936,21 +2937,28 @@ function renderChart(productsData, combosData, type = 'product', limit = 5) {
 
     function renderImportHistory() {
         let html = '';
-        (storeData.importHistory || []).forEach(h => {
-            html += `<tr>
-                        <td class="text-sm">${h.date}</td>
-                        <td class="font-medium">${h.productName}${h.flavor ? `<span class="text-xs text-slate-400 ml-1">(${h.flavor})</span>` : ''}</td>
-                        <td class="text-emerald-600 font-semibold">${h.quantity}</td>
-                        <td>${h.importPrice.toLocaleString()}đ</td>
-                        <td class="text-amber-600">${h.totalCost.toLocaleString()}đ</td>
-                        <td class="text-slate-500 text-sm max-w-[200px] truncate">${h.note || '—'}</td>
-                        <td><button onclick="deleteImportRecord(${h.id})" class="text-red-500 text-sm"><i class="fas fa-trash"></i></button></td>
-                    </tr>`;
-        });
-        const historyEl = document.getElementById('importHistoryList');
-        if (historyEl) {
-            historyEl.innerHTML = html || '<tr><td colspan="7" class="text-center py-4 text-slate-400">Chưa có lịch sử nhập hàng</td></tr>';
+        const history = storeData.importHistory || [];
+        if (history.length === 0) {
+            html = '<tr><td colspan="7" class="text-center py-8 text-slate-400">Chưa có lịch sử nhập hàng</td></tr>';
+        } else {
+            history.forEach(h => {
+                let attrText = '';
+                if (h.attributeName && h.attributeValue) {
+                    attrText = `<span class="text-xs text-slate-400 ml-1">(${h.attributeName}: ${h.attributeValue})</span>`;
+                }
+                html += `<tr>
+                            <td class="text-sm">${h.date}</td>
+                            <td class="font-medium">${h.productName}${attrText}</td>
+                            <td class="text-emerald-600 font-semibold">${h.quantity}</td>
+                            <td>${h.importPrice.toLocaleString()}đ</td>
+                            <td class="text-amber-600">${h.totalCost.toLocaleString()}đ</td>
+                            <td class="text-slate-500 text-sm max-w-[150px] truncate">${h.note || '—'}</td>
+                            <td><button onclick="deleteImportRecord(${h.id})" class="text-red-500 text-sm"><i class="fas fa-trash"></i></button></td>
+                        </tr>`;
+            });
         }
+        const historyEl = document.getElementById('importHistoryList');
+        if (historyEl) historyEl.innerHTML = html;
     }
 
     function deleteImportRecord(id) {

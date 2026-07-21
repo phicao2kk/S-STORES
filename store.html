@@ -1667,49 +1667,40 @@ function updateCartDisplay() {
         subtotal += itemTotal;
         
         let displayName = item.name;
-        
-        // Xử lý hiển thị cho sản phẩm lẻ (có selectedAttrs)
         if(item.type === 'product' && item.selectedAttrs && Object.keys(item.selectedAttrs).length > 0) {
             let attrsText = Object.entries(item.selectedAttrs).map(([key, value]) => `${key}: ${value}`).join(', ');
             displayName = `${item.name} (${attrsText})`;
-        }
-        // Xử lý hiển thị cho combo (có selectedAttributes)
-        else if(item.type === 'combo' && item.selectedAttributes && Object.keys(item.selectedAttributes).length > 0) {
+        } else if(item.type === 'combo' && item.selectedAttributes && Object.keys(item.selectedAttributes).length > 0) {
             let attrsList = [];
-            // Duyệt qua từng productId trong selectedAttributes
             for(let [productId, attrs] of Object.entries(item.selectedAttributes)) {
                 if(typeof attrs === 'object') {
-                    // Trường hợp nhiều thuộc tính
                     let attrsText = Object.entries(attrs).map(([key, value]) => `${key}: ${value}`).join(', ');
                     attrsList.push(attrsText);
                 } else {
-                    // Trường hợp flavor cũ
                     attrsList.push(attrs);
                 }
             }
             if(attrsList.length > 0) {
                 displayName = `${item.name} [${attrsList.join(', ')}]`;
             }
-        }
-        // Xử lý hiển thị cho combo cũ (selectedFlavors)
-        else if(item.type === 'combo' && item.selectedFlavors && Object.keys(item.selectedFlavors).length > 0) {
+        } else if(item.type === 'combo' && item.selectedFlavors && Object.keys(item.selectedFlavors).length > 0) {
             let flavorText = Object.values(item.selectedFlavors).join(', ');
             displayName = `${item.name} (Vị: ${flavorText})`;
         }
         
-        html += `<div class="border-b pb-3">
+        html += `<div class="border-b border-slate-700/50 pb-3 mb-3 last:border-0 last:mb-0">
                     <div class="flex justify-between items-start">
                         <div>
-                            <span class="font-medium">${escapeHtml(displayName)}</span>
+                            <span class="font-medium text-slate-200">${escapeHtml(displayName)}</span>
                             <div class="text-xs text-slate-400">${item.price.toLocaleString()}đ x ${item.qty}</div>
                         </div>
-                        <span class="font-semibold text-indigo-600">${itemTotal.toLocaleString()}đ</span>
+                        <span class="font-semibold text-purple-400">${itemTotal.toLocaleString()}đ</span>
                     </div>
-                    <div class="flex justify-end gap-3 mt-2">
-                        <button onclick="updateCartQty(${idx}, -1)" class="w-7 h-7 bg-slate-100 rounded-full hover:bg-slate-200">-</button>
-                        <span class="w-6 text-center">${item.qty}</span>
-                        <button onclick="updateCartQty(${idx}, 1)" class="w-7 h-7 bg-slate-100 rounded-full hover:bg-slate-200">+</button>
-                        <button onclick="removeCartItem(${idx})" class="text-red-500 text-sm ml-2">Xóa</button>
+                    <div class="flex justify-end items-center gap-2 mt-2">
+                        <button onclick="updateCartQty(${idx}, -1)" class="w-8 h-8 bg-slate-700 hover:bg-slate-600 text-white rounded-full flex items-center justify-center transition border border-slate-600">−</button>
+                        <span class="w-6 text-center text-slate-200 font-semibold">${item.qty}</span>
+                        <button onclick="updateCartQty(${idx}, 1)" class="w-8 h-8 bg-slate-700 hover:bg-slate-600 text-white rounded-full flex items-center justify-center transition border border-slate-600">+</button>
+                        <button onclick="removeCartItem(${idx})" class="text-red-400 hover:text-red-300 text-sm ml-2 transition">Xóa</button>
                     </div>
                 </div>`;
     });
@@ -1749,21 +1740,19 @@ function updateCartDisplay() {
         function selectPaymentMethod(method) {
             currentPaymentMethod = method;
             
-            // Reset UI
-            document.getElementById('codRadio').innerHTML = '<div class="w-2 h-2 rounded-full bg-emerald-600 hidden"></div>';
-            document.getElementById('bankRadio').innerHTML = '<div class="w-2 h-2 rounded-full bg-blue-600 hidden"></div>';
-            document.getElementById('codOption').classList.remove('border-emerald-400', 'bg-emerald-50');
-            document.getElementById('bankOption').classList.remove('border-blue-400', 'bg-blue-50');
+            document.getElementById('codRadio').innerHTML = '<div class="w-2 h-2 rounded-full bg-emerald-500 hidden"></div>';
+            document.getElementById('bankRadio').innerHTML = '<div class="w-2 h-2 rounded-full bg-blue-500 hidden"></div>';
+            document.getElementById('codOption').classList.remove('border-emerald-400', 'bg-emerald-500/20');
+            document.getElementById('bankOption').classList.remove('border-blue-400', 'bg-blue-500/20');
             
             if(method === 'cod') {
-                document.getElementById('codRadio').innerHTML = '<div class="w-2 h-2 rounded-full bg-emerald-600"></div>';
-                document.getElementById('codOption').classList.add('border-emerald-400', 'bg-emerald-50');
+                document.getElementById('codRadio').innerHTML = '<div class="w-2 h-2 rounded-full bg-emerald-500"></div>';
+                document.getElementById('codOption').classList.add('border-emerald-400', 'bg-emerald-500/20');
                 document.getElementById('bankInfoPanel').classList.add('hidden');
             } else {
-                document.getElementById('bankRadio').innerHTML = '<div class="w-2 h-2 rounded-full bg-blue-600"></div>';
-                document.getElementById('bankOption').classList.add('border-blue-400', 'bg-blue-50');
+                document.getElementById('bankRadio').innerHTML = '<div class="w-2 h-2 rounded-full bg-blue-500"></div>';
+                document.getElementById('bankOption').classList.add('border-blue-400', 'bg-blue-500/20');
                 document.getElementById('bankInfoPanel').classList.remove('hidden');
-                // Cập nhật nội dung chuyển khoản mỗi khi chuyển sang tab bank
                 updateBankTransferContent();
             }
         }
@@ -2230,41 +2219,42 @@ function editCustomerInfoFromCheckout() {
     }
     showCustomerInfoModal();
 }
-        function selectDeliveryMethod(method) {
+
+function selectDeliveryMethod(method) {
     currentDeliveryMethod = method;
-    document.getElementById('pickupRadio').innerHTML = '<div class="w-3 h-3 rounded-full bg-indigo-600 hidden"></div>';
-    document.getElementById('shipRadio').innerHTML = '<div class="w-3 h-3 rounded-full bg-indigo-600 hidden"></div>';
-    document.getElementById('pickupOption').classList.remove('border-indigo-400', 'bg-indigo-50');
-    document.getElementById('shipOption').classList.remove('border-indigo-400', 'bg-indigo-50');
+    document.getElementById('pickupRadio').innerHTML = '<div class="w-3 h-3 rounded-full bg-purple-600 hidden"></div>';
+    document.getElementById('shipRadio').innerHTML = '<div class="w-3 h-3 rounded-full bg-purple-600 hidden"></div>';
+    document.getElementById('pickupOption').classList.remove('border-purple-400', 'bg-purple-500/20');
+    document.getElementById('shipOption').classList.remove('border-purple-400', 'bg-purple-500/20');
     
     if(method === 'pickup') {
-        document.getElementById('pickupRadio').innerHTML = '<div class="w-3 h-3 rounded-full bg-indigo-600"></div>';
-        document.getElementById('pickupOption').classList.add('border-indigo-400', 'bg-indigo-50');
+        document.getElementById('pickupRadio').innerHTML = '<div class="w-3 h-3 rounded-full bg-purple-600"></div>';
+        document.getElementById('pickupOption').classList.add('border-purple-400', 'bg-purple-500/20');
         document.getElementById('storeInfoPanel').classList.remove('hidden');
         document.getElementById('shipInfoPanel').classList.add('hidden');
     } else {
-        document.getElementById('shipRadio').innerHTML = '<div class="w-3 h-3 rounded-full bg-indigo-600"></div>';
-        document.getElementById('shipOption').classList.add('border-indigo-400', 'bg-indigo-50');
+        document.getElementById('shipRadio').innerHTML = '<div class="w-3 h-3 rounded-full bg-purple-600"></div>';
+        document.getElementById('shipOption').classList.add('border-purple-400', 'bg-purple-500/20');
         document.getElementById('storeInfoPanel').classList.add('hidden');
         document.getElementById('shipInfoPanel').classList.remove('hidden');
         
-        // Nếu chưa có địa chỉ thì nhắc nhở cập nhật
         if (!customerInfo || !customerInfo.address) {
             document.getElementById('shipInfoPanel').innerHTML += `
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-3 text-sm text-yellow-700">
+                <div class="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-3 mt-3 text-sm text-yellow-400">
                     <i class="fas fa-exclamation-triangle"></i> 
                     Bạn chưa cập nhật địa chỉ nhận hàng. 
-                    <button onclick="editCustomerInfoFromCheckout()" class="underline font-medium">Nhấn vào đây để cập nhật</button>
+                    <button onclick="editCustomerInfoFromCheckout()" class="underline font-medium hover:text-yellow-300">Nhấn vào đây để cập nhật</button>
                 </div>
             `;
         }
     }
 }
-        function closeCheckoutModal(event) {
-            if(event && event.target !== event.currentTarget) return;
-            document.getElementById('checkoutModal').classList.add('hidden');
-            document.getElementById('checkoutModal').classList.remove('flex');
-        }
+
+function closeCheckoutModal(event) {
+    if(event && event.target !== event.currentTarget) return;
+    document.getElementById('checkoutModal').classList.add('hidden');
+    document.getElementById('checkoutModal').classList.remove('flex');
+}
         
 async function submitOrder() {
     if (cart.length === 0) {

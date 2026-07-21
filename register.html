@@ -404,89 +404,126 @@
         // Khởi tạo sự kiện Enter
         setupEnterListener();
 
-    (function() {
-        document.addEventListener('touchmove', function(e) {
-            if (e.touches && e.touches.length > 1) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', function(e) {
-            const now = Date.now();
-            if (now - lastTouchEnd <= 300) {
-                e.preventDefault();
-            }
-            lastTouchEnd = now;
-        }, false);
-
-        document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
-        document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
-        document.addEventListener('gestureend', function(e) { e.preventDefault(); });
-
-        const style = document.createElement('style');
-        style.textContent = `
-            html, body {
-                touch-action: pan-y pan-x !important;
-                -webkit-text-size-adjust: 100% !important;
-                text-size-adjust: 100% !important;
-            }
-            * { touch-action: manipulation !important; }
-            img, video, canvas { touch-action: none !important; }
-        `;
-        document.head.appendChild(style);
-    })();
-
-    // ===== KHÓA ZOOM CỨNG - BỔ SUNG CHO iOS =====
+    // ===== KHÓA ZOOM CỨNG 100% =====
 (function() {
-    // Ngăn pinch zoom bằng 2 ngón tay
+    'use strict';
+
+    // 1. Ngăn pinch zoom
     document.addEventListener('touchmove', function(e) {
         if (e.touches && e.touches.length > 1) {
             e.preventDefault();
+            return false;
         }
     }, { passive: false });
 
-    // Ngăn double-tap zoom
+    // 2. Ngăn double-tap zoom
     let lastTouchEnd = 0;
     document.addEventListener('touchend', function(e) {
-        const now = Date.now();
-        if (now - lastTouchEnd <= 300) {
+        const now = performance.now();
+        if (now - lastTouchEnd <= 350) {
             e.preventDefault();
+            return false;
         }
         lastTouchEnd = now;
-    }, false);
+    }, { passive: false });
 
-    // Ngăn gesture events (iOS)
-    document.addEventListener('gesturestart', function(e) {
-        e.preventDefault();
-    });
-    document.addEventListener('gesturechange', function(e) {
-        e.preventDefault();
-    });
-    document.addEventListener('gestureend', function(e) {
-        e.preventDefault();
-    });
-
-    // Ngăn zoom bằng keyboard shortcuts (Ctrl+ / Cmd+)
-    document.addEventListener('keydown', function(e) {
-        if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '-' || e.key === '=')) {
+    // 3. Ngăn gesture events (iOS)
+    ['gesturestart', 'gesturechange', 'gestureend'].forEach(function(event) {
+        document.addEventListener(event, function(e) {
             e.preventDefault();
+            return false;
+        }, { passive: false });
+    });
+
+    // 4. Ngăn zoom bằng keyboard (desktop)
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '-' || e.key === '=' || e.key === '0')) {
+            e.preventDefault();
+            return false;
         }
     });
 
-    // CSS động để khóa zoom
-    const style = document.createElement('style');
+    // 5. Ngăn wheel zoom (desktop)
+    document.addEventListener('wheel', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            return false;
+        }
+    }, { passive: false });
+
+    // 6. Ngăn zoom trên iframe/contenteditable
+    document.querySelectorAll('iframe, [contenteditable="true"]').forEach(function(el) {
+        el.addEventListener('touchstart', function(e) {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+                return false;
+            }
+        }, { passive: false });
+    });
+
+    // 7. CSS động - áp dụng trực tiếp
+    var style = document.createElement('style');
     style.textContent = `
         html, body {
             touch-action: pan-y pan-x !important;
             -webkit-text-size-adjust: 100% !important;
             text-size-adjust: 100% !important;
+            overscroll-behavior: none !important;
         }
-        * { touch-action: manipulation !important; }
-        img, video, canvas { touch-action: none !important; }
-        input, select, textarea { font-size: 16px !important; }
+        * {
+            touch-action: manipulation !important;
+            -webkit-touch-callout: none !important;
+            -webkit-user-drag: none !important;
+        }
+        img, video, canvas, iframe, svg {
+            touch-action: none !important;
+        }
+        input, select, textarea, button {
+            font-size: 16px !important;
+        }
+        a, button, .clickable, [role="button"] {
+            touch-action: manipulation !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
     `;
     document.head.appendChild(style);
+
+    // 8. Fix cho iOS - ngăn zoom khi focus vào input
+    var inputs = document.querySelectorAll('input, textarea, select');
+    inputs.forEach(function(input) {
+        input.addEventListener('focus', function() {
+            // iOS sẽ không zoom nếu font-size >= 16px
+            this.style.fontSize = '16px';
+        });
+        input.addEventListener('touchend', function(e) {
+            // Ngăn zoom khi chạm vào input
+            if (e.touches && e.touches.length > 1) {
+                e.preventDefault();
+                return false;
+            }
+        }, { passive: false });
+    });
+
+    // 9. Kiểm tra và fix lại sau khi DOM thay đổi
+    if (window.MutationObserver) {
+        var observer = new MutationObserver(function() {
+            // Re-apply cho các phần tử mới
+            document.querySelectorAll('input, textarea, select, iframe, [contenteditable="true"]').forEach(function(el) {
+                if (!el.dataset.zoomFixed) {
+                    el.dataset.zoomFixed = 'true';
+                    el.addEventListener('touchstart', function(e) {
+                        if (e.touches.length > 1) {
+                            e.preventDefault();
+                            return false;
+                        }
+                    }, { passive: false });
+                }
+            });
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
+
+    console.log('🔒 Zoom đã bị khóa cứng 100%');
 })();
 
     </script>

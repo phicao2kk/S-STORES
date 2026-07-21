@@ -97,9 +97,11 @@
         </div>
 
         <div class="bg-game-card border border-game-border shadow-glow-purple rounded-2xl p-8">
-            <div class="flex gap-4 mb-6 border-b border-game-border pb-1">
-                <button id="btnRegister" class="flex-1 py-2 font-black text-game-primary border-b-2 border-game-primary transition uppercase tracking-wider text-sm">Đăng ký</button>
-                <button id="btnLogin" class="flex-1 py-2 font-black text-slate-500 hover:text-slate-300 transition uppercase tracking-wider text-sm">Đăng nhập</button>
+            <div class="flex gap-4 mb-6 border-b border-game-border pb-1 relative">
+                <button id="btnRegister" class="flex-1 py-2 font-black text-game-primary transition uppercase tracking-wider text-sm relative z-10">Đăng ký</button>
+                <button id="btnLogin" class="flex-1 py-2 font-black text-slate-500 hover:text-slate-300 transition uppercase tracking-wider text-sm relative z-10">Đăng nhập</button>
+                <!-- Thanh gạch dưới di chuyển -->
+                <div id="tabIndicator" class="absolute bottom-0 left-0 h-0.5 bg-game-primary transition-all duration-300" style="width: 50%;"></div>
             </div>
 
             <!-- ĐĂNG KÝ FORM -->
@@ -153,6 +155,8 @@
     </div>
 
     <script>
+        const tabIndicator = document.getElementById('tabIndicator');
+
         // ==================== ẨN/HIỆN MẬT KHẨU ====================
         document.querySelectorAll('.toggle-password').forEach(icon => {
             icon.addEventListener('click', function() {
@@ -292,10 +296,12 @@
                 
                 document.getElementById('registerForm').classList.add('hidden');
                 document.getElementById('loginForm').classList.remove('hidden');
-                document.getElementById('btnRegister').classList.remove('text-game-primary', 'border-game-primary');
+                document.getElementById('btnRegister').classList.remove('text-game-primary');
                 document.getElementById('btnRegister').classList.add('text-slate-500');
-                document.getElementById('btnLogin').classList.add('text-game-primary', 'border-game-primary');
+                document.getElementById('btnLogin').classList.add('text-game-primary');
                 document.getElementById('btnLogin').classList.remove('text-slate-500');
+                // Và di chuyển tabIndicator
+                tabIndicator.style.left = '50%';
                 
                 document.getElementById('regStoreName').value = '';
                 document.getElementById('regUsername').value = '';
@@ -357,24 +363,38 @@
             }
         }
 
-        // ==================== CHUYỂN TAB ====================
-        document.getElementById('btnRegister').onclick = () => {
-            document.getElementById('registerForm').classList.remove('hidden');
-            document.getElementById('loginForm').classList.add('hidden');
-            document.getElementById('btnRegister').classList.add('text-game-primary', 'border-game-primary');
-            document.getElementById('btnRegister').classList.remove('text-slate-500');
-            document.getElementById('btnLogin').classList.remove('text-game-primary', 'border-game-primary');
-            document.getElementById('btnLogin').classList.add('text-slate-500');
-        };
-        
-        document.getElementById('btnLogin').onclick = () => {
-            document.getElementById('registerForm').classList.add('hidden');
-            document.getElementById('loginForm').classList.remove('hidden');
-            document.getElementById('btnLogin').classList.add('text-game-primary', 'border-game-primary');
-            document.getElementById('btnLogin').classList.remove('text-slate-500');
-            document.getElementById('btnRegister').classList.remove('text-game-primary', 'border-game-primary');
-            document.getElementById('btnRegister').classList.add('text-slate-500');
-        };
+                // ==================== CHUYỂN TAB ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Không cần khai báo lại tabIndicator nữa
+            const btnRegister = document.getElementById('btnRegister');
+            const btnLogin = document.getElementById('btnLogin');
+            const registerForm = document.getElementById('registerForm');
+            const loginForm = document.getElementById('loginForm');
+
+            btnRegister.onclick = () => {
+                registerForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+                
+                btnRegister.classList.add('text-game-primary');
+                btnRegister.classList.remove('text-slate-500');
+                btnLogin.classList.add('text-slate-500');
+                btnLogin.classList.remove('text-game-primary');
+                
+                tabIndicator.style.left = '0%';
+            };
+
+            btnLogin.onclick = () => {
+                registerForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+                
+                btnLogin.classList.add('text-game-primary');
+                btnLogin.classList.remove('text-slate-500');
+                btnRegister.classList.add('text-slate-500');
+                btnRegister.classList.remove('text-game-primary');
+                
+                tabIndicator.style.left = '50%';
+            };
+        });
 
         // Khởi tạo sự kiện Enter
         setupEnterListener();

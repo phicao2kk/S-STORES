@@ -562,6 +562,22 @@
             margin-bottom: 12px;
             opacity: 0.5;
         }
+        @media (max-width: 640px) {
+            .table-dark {
+                min-width: 700px;
+                font-size: 0.6rem;
+            }
+            .table-dark th,
+            .table-dark td {
+                padding: 0.3rem 0.3rem;
+            }
+            #stockSummary .table-dark {
+                min-width: 500px;
+            }
+            .glass-card.p-6 {
+                padding: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -775,8 +791,8 @@
 
         <!-- TAB NHẬP HÀNG -->
         <div id="inventoryTab" class="hidden">
-            <div class="grid lg:grid-cols-3 gap-6">
-                <div class="glass-card p-6 h-fit glow-accent">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="glass-card p-4 md:p-6 glow-accent lg:col-span-1 max-h-[500px] md:max-h-none overflow-y-auto">
                     <h3 class="text-lg font-bold mb-4 text-emerald-400 flex items-center gap-2">
                         <i class="fas fa-truck text-emerald-400"></i> Nhập hàng
                     </h3>
@@ -822,7 +838,7 @@
                             <h3 class="font-bold text-slate-300"><i class="fas fa-history mr-2 text-emerald-400"></i> Lịch sử nhập hàng</h3>
                             <button onclick="clearImportHistory()" class="text-xs text-red-400 hover:text-red-300 transition">Xóa lịch sử</button>
                         </div>
-                        <div class="flex-1 overflow-y-auto max-h-[300px]">
+                        <div class="flex-1 overflow-y-auto max-h-[250px] md:max-h-[300px]">
                             <table class="table-dark">
                                 <thead>
                                     <tr>
@@ -2509,137 +2525,139 @@ function renderChart(productsData, combosData, type = 'product', limit = 5) {
     }
 
     function renderStockSummary() {
-        let html = '';
-        let needList = [];
-        
-        storeData.products.forEach(p => {
-            if(p.attributes && p.attributes.length > 0) {
-                p.attributes.forEach(attr => {
-                    attr.options.forEach(option => {
-                        let soldCount = 0;
-                        let stockCount = 0;
-                        
-                        if(p.soldByAttributes && p.soldByAttributes[attr.name] && p.soldByAttributes[attr.name][option]) {
-                            soldCount = p.soldByAttributes[attr.name][option];
-                        } else if(p.soldByFlavor && p.soldByFlavor[option]) {
-                            soldCount = p.soldByFlavor[option];
-                        }
-                        
-                        if(p.stockByAttributes && p.stockByAttributes[attr.name] && p.stockByAttributes[attr.name][option]) {
-                            stockCount = p.stockByAttributes[attr.name][option];
-                        } else if(p.stockByFlavor && p.stockByFlavor[option]) {
-                            stockCount = p.stockByFlavor[option];
-                        }
-                        
-                        let needCount = soldCount - stockCount;
-                        
-                        if(needCount > 0) {
-                            needList.push({
-                                productId: p.id,
-                                productName: p.name,
-                                attributeName: attr.name,
-                                attributeValue: option,
-                                need: needCount,
-                                sold: soldCount,
-                                stock: stockCount
-                            });
-                        }
-                    });
-                });
-            }
-            else if(p.flavor && p.flavor.trim()) {
-                let flavors = p.flavor.split(',').map(f => f.trim()).filter(f => f);
-                flavors.forEach(flavor => {
-                    let soldCount = (p.soldByFlavor && p.soldByFlavor[flavor]) || 0;
-                    let stockCount = (p.stockByFlavor && p.stockByFlavor[flavor]) || 0;
+    let html = '';
+    let needList = [];
+    
+    storeData.products.forEach(p => {
+        if(p.attributes && p.attributes.length > 0) {
+            p.attributes.forEach(attr => {
+                attr.options.forEach(option => {
+                    let soldCount = 0;
+                    let stockCount = 0;
+                    
+                    if(p.soldByAttributes && p.soldByAttributes[attr.name] && p.soldByAttributes[attr.name][option]) {
+                        soldCount = p.soldByAttributes[attr.name][option];
+                    } else if(p.soldByFlavor && p.soldByFlavor[option]) {
+                        soldCount = p.soldByFlavor[option];
+                    }
+                    
+                    if(p.stockByAttributes && p.stockByAttributes[attr.name] && p.stockByAttributes[attr.name][option]) {
+                        stockCount = p.stockByAttributes[attr.name][option];
+                    } else if(p.stockByFlavor && p.stockByFlavor[option]) {
+                        stockCount = p.stockByFlavor[option];
+                    }
+                    
                     let needCount = soldCount - stockCount;
                     
                     if(needCount > 0) {
                         needList.push({
                             productId: p.id,
                             productName: p.name,
-                            attributeName: "Vị",
-                            attributeValue: flavor,
+                            attributeName: attr.name,
+                            attributeValue: option,
                             need: needCount,
                             sold: soldCount,
                             stock: stockCount
                         });
                     }
                 });
-            } 
-            else {
-                let soldCount = p.soldCount || 0;
-                let stockCount = p.stock || 0;
+            });
+        }
+        else if(p.flavor && p.flavor.trim()) {
+            let flavors = p.flavor.split(',').map(f => f.trim()).filter(f => f);
+            flavors.forEach(flavor => {
+                let soldCount = (p.soldByFlavor && p.soldByFlavor[flavor]) || 0;
+                let stockCount = (p.stockByFlavor && p.stockByFlavor[flavor]) || 0;
                 let needCount = soldCount - stockCount;
                 
                 if(needCount > 0) {
                     needList.push({
                         productId: p.id,
                         productName: p.name,
-                        attributeName: null,
-                        attributeValue: null,
+                        attributeName: "Vị",
+                        attributeValue: flavor,
                         need: needCount,
                         sold: soldCount,
                         stock: stockCount
                     });
                 }
+            });
+        } 
+        else {
+            let soldCount = p.soldCount || 0;
+            let stockCount = p.stock || 0;
+            let needCount = soldCount - stockCount;
+            
+            if(needCount > 0) {
+                needList.push({
+                    productId: p.id,
+                    productName: p.name,
+                    attributeName: null,
+                    attributeValue: null,
+                    need: needCount,
+                    sold: soldCount,
+                    stock: stockCount
+                });
             }
-        });
-        
-        const summaryEl = document.getElementById('stockSummary');
-        if (!summaryEl) return;
-        
-        if(needList.length === 0) {
-            html = `
-                <div class="text-center py-8 text-slate-400 bg-slate-800/30 rounded-xl border border-slate-700/50">
-                    <i class="fas fa-check-circle text-emerald-400 text-3xl block mb-3"></i>
-                    <p class="font-medium">🎉 Tất cả sản phẩm đều đủ hàng!</p>
-                    <p class="text-sm text-slate-500 mt-1">Không cần nhập thêm.</p>
-                </div>
-            `;
-        } else {
-            html = `
-                <div class="bg-slate-800/30 rounded-xl border border-slate-700/50 overflow-hidden">
-                    <table class="w-full text-sm border-collapse">
+        }
+    });
+    
+    const summaryEl = document.getElementById('stockSummary');
+    if (!summaryEl) return;
+    
+    if(needList.length === 0) {
+        html = `
+            <div class="text-center py-8 text-slate-400 bg-slate-800/30 rounded-xl border border-slate-700/50">
+                <i class="fas fa-check-circle text-emerald-400 text-3xl block mb-3"></i>
+                <p class="font-medium">🎉 Tất cả sản phẩm đều đủ hàng!</p>
+                <p class="text-sm text-slate-500 mt-1">Không cần nhập thêm.</p>
+            </div>
+        `;
+    } else {
+        // ===== THÊM overflow-x-auto CHO BẢNG =====
+        html = `
+            <div class="bg-slate-800/30 rounded-xl border border-slate-700/50 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm border-collapse min-w-[600px] md:min-w-full">
                         <thead class="bg-slate-800/50 sticky top-0">
                             <tr class="border-b border-slate-700/50">
-                                <th class="text-left py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">📦 Sản phẩm</th>
-                                <th class="text-left py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">🏷️ Thuộc tính</th>
-                                <th class="text-left py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">🎯 Giá trị</th>
-                                <th class="text-center py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">📦 Tồn</th>
-                                <th class="text-center py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">🛒 Đã bán</th>
-                                <th class="text-center py-2 px-3 text-xs font-semibold text-red-400 uppercase tracking-wider">⚠️ Cần nhập</th>
-                                <th class="text-center py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Thao tác</th>
+                                <th class="text-left py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">📦 Sản phẩm</th>
+                                <th class="text-left py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">🏷️ Thuộc tính</th>
+                                <th class="text-left py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">🎯 Giá trị</th>
+                                <th class="text-center py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">📦 Tồn</th>
+                                <th class="text-center py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">🛒 Đã bán</th>
+                                <th class="text-center py-2 px-3 text-xs font-semibold text-red-400 uppercase tracking-wider whitespace-nowrap">⚠️ Cần nhập</th>
+                                <th class="text-center py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
-            `;
-            
-            needList.forEach(item => {
-                let statusIcon = item.stock === 0 ? '🔴' : (item.need > 10 ? '🟠' : '🟡');
-                let attrDisplay = item.attributeName ? `<span class="badge-info bg-blue-500/10 text-blue-300 px-2 py-0.5 rounded-full text-xs border border-blue-500/20">${item.attributeName}</span>` : '<span class="text-slate-500">—</span>';
-                let valueDisplay = item.attributeValue ? `<span class="badge-warning bg-amber-500/10 text-amber-300 px-2 py-0.5 rounded-full text-xs border border-amber-500/20">${item.attributeValue}</span>` : '<span class="text-slate-500">—</span>';
-                
-                html += `
-                    <tr class="border-b border-slate-700/30 hover:bg-slate-800/30 transition">
-                        <td class="py-2 px-3 font-medium text-slate-300">${statusIcon} ${item.productName}</td>
-                        <td class="py-2 px-3">${attrDisplay}</td>
-                        <td class="py-2 px-3">${valueDisplay}</td>
-                        <td class="py-2 px-3 text-center ${item.stock === 0 ? 'text-red-400 font-bold' : 'text-slate-300'}">${item.stock}</td>
-                        <td class="py-2 px-3 text-center font-medium text-slate-300">${item.sold}</td>
-                        <td class="py-2 px-3 text-center text-red-400 font-bold text-base">${item.need}</td>
-                        <td class="py-2 px-3 text-center">
-                            <button onclick="quickImportByAttribute('${item.productId}', '${item.attributeName || ''}', '${item.attributeValue || ''}', ${item.need})" class="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 px-3 py-1.5 rounded-lg text-xs transition border border-emerald-500/20">
-                                <i class="fas fa-truck"></i> Nhập ${item.need}
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-            
-            let totalNeed = needList.reduce((sum, item) => sum + item.need, 0);
+        `;
+        
+        needList.forEach(item => {
+            let statusIcon = item.stock === 0 ? '🔴' : (item.need > 10 ? '🟠' : '🟡');
+            let attrDisplay = item.attributeName ? `<span class="badge-info bg-blue-500/10 text-blue-300 px-2 py-0.5 rounded-full text-xs border border-blue-500/20 whitespace-nowrap">${item.attributeName}</span>` : '<span class="text-slate-500">—</span>';
+            let valueDisplay = item.attributeValue ? `<span class="badge-warning bg-amber-500/10 text-amber-300 px-2 py-0.5 rounded-full text-xs border border-amber-500/20 whitespace-nowrap">${item.attributeValue}</span>` : '<span class="text-slate-500">—</span>';
             
             html += `
+                <tr class="border-b border-slate-700/30 hover:bg-slate-800/30 transition">
+                    <td class="py-2 px-3 font-medium text-slate-300 whitespace-nowrap">${statusIcon} ${item.productName}</td>
+                    <td class="py-2 px-3">${attrDisplay}</td>
+                    <td class="py-2 px-3">${valueDisplay}</td>
+                    <td class="py-2 px-3 text-center ${item.stock === 0 ? 'text-red-400 font-bold' : 'text-slate-300'}">${item.stock}</td>
+                    <td class="py-2 px-3 text-center font-medium text-slate-300">${item.sold}</td>
+                    <td class="py-2 px-3 text-center text-red-400 font-bold text-base">${item.need}</td>
+                    <td class="py-2 px-3 text-center">
+                        <button onclick="quickImportByAttribute('${item.productId}', '${item.attributeName || ''}', '${item.attributeValue || ''}', ${item.need})" class="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 px-2 py-1 md:px-3 md:py-1.5 rounded-lg text-[10px] md:text-xs transition border border-emerald-500/20 whitespace-nowrap">
+                            <i class="fas fa-truck"></i> Nhập ${item.need}
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        let totalNeed = needList.reduce((sum, item) => sum + item.need, 0);
+        
+        html += `
                         </tbody>
                         <tfoot class="bg-slate-800/50 sticky bottom-0 border-t border-slate-700/50">
                             <tr>
@@ -2650,10 +2668,11 @@ function renderChart(productsData, combosData, type = 'product', limit = 5) {
                         </tfoot>
                     </table>
                 </div>
-            `;
-        }
-        summaryEl.innerHTML = html;
+            </div>
+        `;
     }
+    summaryEl.innerHTML = html;
+}
 
     function quickImportByAttribute(productId, attributeName, attributeValue, suggestedQty) {
         console.log("quickImportByAttribute called:", {productId, attributeName, attributeValue, suggestedQty});

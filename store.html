@@ -736,9 +736,28 @@
             <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm sản phẩm, combo..." class="input-dark max-w-md">
         </div>
 
-        <!-- PRODUCT GRID -->
-        <div id="productList" class="product-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6"></div>
+<!-- PRODUCT GRID -->
+<div id="productList" class="product-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+    <!-- LOADING INDICATOR -->
+    <div id="loadingIndicator" class="col-span-full flex items-center justify-center py-20">
+        <div class="text-center">
+            <div class="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-slate-400 text-sm">Đang tải sản phẩm...</p>
+        </div>
     </div>
+</div>
+
+    <!-- PAGINATION -->
+<div id="paginationContainer" class="flex justify-center items-center gap-2 mt-6 flex-wrap">
+    <button id="prevPage" class="bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 px-4 py-2 rounded-xl text-sm transition border border-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+        <i class="fas fa-chevron-left"></i> Trước
+    </button>
+    <div id="pageNumbers" class="flex gap-1"></div>
+    <button id="nextPage" class="bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 px-4 py-2 rounded-xl text-sm transition border border-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed">
+        Sau <i class="fas fa-chevron-right"></i>
+    </button>
+</div>
+<div id="pageInfo" class="text-center text-slate-500 text-xs mt-2"></div>
 
     <!-- CART DRAWER -->
     <div id="cartDrawer" class="cart-drawer">
@@ -1118,6 +1137,9 @@
     <div id="toastContainer"></div>
 
     <script>
+        let currentPage = 1;
+        const ITEMS_PER_PAGE = window.innerWidth < 640 ? 6 : 10;
+        let allProducts = [];
         let storeId = null, storeData = null, cart = [];
         let currentDeliveryMethod = 'pickup';
         let storeInfo = {};
@@ -1252,6 +1274,54 @@ function init() {
 }
 
 function loadStoreData() {
+    // ========== HIỂN THỊ LOADING ==========
+    showLoading(true);
+    
+    // ========== KIỂM TRA CACHE TRƯỚC ==========
+    const cached = localStorage.getItem(`store_data_${storeId}`);
+    if (cached) {
+        try {
+            const cachedData = JSON.parse(cached);
+            // Kiểm tra cache còn hợp lệ không (5 phút)
+            const cacheTime = localStorage.getItem(`store_data_time_${storeId}`);
+            if (cacheTime && (Date.now() - parseInt(cacheTime)) < 5 * 60 * 1000) {
+                console.log("📦 Dùng dữ liệu từ cache");
+                storeData = cachedData;
+                storeInfo = storeData.storeInfo || {};
+                if (!storeData.products) storeData.products = [];
+                if (!storeData.combos) storeData.combos = [];
+                if (!storeData.orders) storeData.orders = [];
+                
+                currentStoreName = storeInfo.storeName || "Cửa hàng";
+                
+                // Cập nhật tiêu đề
+                let storeTitleEl = document.getElementById('storeTitle');
+                if (storeTitleEl) {
+                    storeTitleEl.innerHTML = `<i class="fas fa-store"></i> ${currentStoreName}`;
+                }
+                
+                // Cập nhật slogan
+                let storeSloganEl = document.getElementById('storeSlogan');
+                if (storeSloganEl) {
+                    let description = storeInfo.description || " ";
+                    if (description.length > 60) {
+                        description = description.substring(0, 57) + '...';
+                    }
+                    storeSloganEl.innerText = description;
+                }
+                
+                renderProducts();
+                loadCart();
+                updateCartDisplay();
+                checkAndShowStoreStatus();
+                showLoading(false);
+            }
+        } catch(e) {
+            console.log("Cache lỗi, tải từ Firebase");
+        }
+    }
+    
+    // ========== TỪ FIREBASE ==========
     const storeRef = db.ref('stores/' + storeId);
     
     storeRef.on('value', (snapshot) => {
@@ -1259,6 +1329,7 @@ function loadStoreData() {
         
         if (!data) {
             document.getElementById('storeTitle').innerText = "Cửa hàng không tồn tại";
+            showLoading(false);
             return;
         }
         
@@ -1281,40 +1352,49 @@ function loadStoreData() {
         let storeSloganEl = document.getElementById('storeSlogan');
         if (storeSloganEl) {
             let description = storeInfo.description || " ";
-            // Giới hạn độ dài nếu cần (tùy chọn)
             if (description.length > 60) {
                 description = description.substring(0, 57) + '...';
             }
             storeSloganEl.innerText = description;
         }
         
-        // ========== BỎ QUA CÁC ELEMENT KHÔNG TỒN TẠI ==========
-        // Các element này không có trong file store.html, nên bỏ qua
-        // document.getElementById('storeNameDisplay') - không tồn tại
-        // document.getElementById('storeAddressDisplay') - không tồn tại  
-        // document.getElementById('storePhoneDisplay') - không tồn tại
-        // document.getElementById('storeHoursDisplay') - không tồn tại
-        // document.getElementById('storeLogo') - không tồn tại
-        
         renderProducts();
         loadCart();
         updateCartDisplay();
-        
-        // GỌI HÀM KIỂM TRA MODAL
         checkAndShowStoreStatus();
         
-        console.log("Đã tải dữ liệu từ Firebase!");
+        // ========== LƯU CACHE ==========
+        try {
+            localStorage.setItem(`store_data_${storeId}`, JSON.stringify(storeData));
+            localStorage.setItem(`store_data_time_${storeId}`, Date.now().toString());
+            console.log("💾 Đã lưu cache dữ liệu");
+        } catch(e) {
+            console.log("Không thể lưu cache:", e);
+        }
+        
+        showLoading(false);
+        console.log("✅ Đã tải dữ liệu từ Firebase!");
     }, (error) => {
-        console.error("Lỗi kết nối Firebase:", error);
+        console.error("❌ Lỗi kết nối Firebase:", error);
         let storeTitleEl = document.getElementById('storeTitle');
         if (storeTitleEl) {
             storeTitleEl.innerText = "Lỗi kết nối máy chủ!";
         }
+        showLoading(false);
+        showToast("Không thể kết nối đến máy chủ!", "error");
     });
 }
 
+// ========== HÀM HIỂN THỊ LOADING ==========
+function showLoading(show) {
+    const loading = document.getElementById('loadingIndicator');
+    if (loading) {
+        loading.style.display = show ? 'flex' : 'none';
+    }
+}
+
 function renderProducts() {
-    // Nếu cửa hàng đóng (temporary hoặc permanent), KHÔNG HIỂN THỊ SẢN PHẨM
+    // Nếu cửa hàng đóng
     if (!isStoreOpen()) {
         let statusInfo = getStoreStatusInfo();
         document.getElementById('productList').innerHTML = `
@@ -1332,32 +1412,53 @@ function renderProducts() {
                 </div>
             </div>
         `;
-        
-        document.querySelectorAll('.bg-blue-500, .bg-white.relative, .bg-white.px-5').forEach(btn => {
-            if(btn !== document.querySelector('button[onclick="refreshPage()"]')) {
-                btn.style.pointerEvents = 'none';
-                btn.style.opacity = '0.5';
-            }
-        });
-        
-        let searchInput = document.getElementById('searchInput');
-        if(searchInput) {
-            searchInput.style.display = 'none';
-        }
+        document.getElementById('paginationContainer').style.display = 'none';
         return;
     }
     
-    // ========== CODE RENDER SẢN PHẨM - GIAO DIỆN TỐI ==========
+    // ========== LẤY DỮ LIỆU ==========
     let keyword = document.getElementById('searchInput').value.toLowerCase();
     let products = (storeData.products || []).filter(p => p.showRetail !== false);
     let combos = (storeData.combos || []).map(c => ({ ...c, type: 'combo' }));
     let all = [...products, ...combos];
     if(keyword) all = all.filter(p => p.name.toLowerCase().includes(keyword));
-    let html = '';
     
-    for(let p of all) {
+    // Lưu vào biến toàn cục để phân trang
+    allProducts = all;
+    currentPage = 1;
+    
+    // Hiển thị trang đầu tiên
+    renderPage(1);
+}
+
+function renderPage(page) {
+    // Ẩn loading
+    const loading = document.getElementById('loadingIndicator');
+    if (loading) loading.style.display = 'none';
+    const totalItems = allProducts.length;
+    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+    
+    if (totalPages === 0) {
+        document.getElementById('productList').innerHTML = '<div class="col-span-full text-center py-16 text-slate-500"><i class="fas fa-box-open text-4xl block mb-3 text-slate-600"></i>Chưa có sản phẩm nào</div>';
+        document.getElementById('paginationContainer').style.display = 'none';
+        return;
+    }
+    
+    // Giới hạn page
+    if (page < 1) page = 1;
+    if (page > totalPages) page = totalPages;
+    currentPage = page;
+    
+    // Lấy sản phẩm cho trang hiện tại
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    const pageItems = allProducts.slice(start, end);
+    
+    // Render sản phẩm
+    let html = '';
+    for(let p of pageItems) {
         if(p.type === 'combo') {
-            // ========== COMBO CARD - TỐI ==========
+            // ========== COMBO CARD ==========
             let itemsText = '';
             if(p.itemsDisplay) {
                 itemsText = p.itemsDisplay.join(', ');
@@ -1371,7 +1472,7 @@ function renderProducts() {
             html += `
                 <div class="bg-[#131b2e] rounded-2xl border border-amber-500/30 hover:border-amber-500/60 hover:shadow-lg hover:shadow-amber-500/10 transition-all duration-300 overflow-hidden flex flex-col h-full">
                     <div class="bg-amber-500/10 p-2 text-center text-xs font-bold text-amber-400 border-b border-amber-500/20">🎁 COMBO TIẾT KIỆM</div>
-                    <img src="${p.image || 'https://picsum.photos/id/100/200/150'}" class="h-40 w-full object-cover" onerror="this.src='https://picsum.photos/200/150'">
+                    <img src="${p.image || 'https://picsum.photos/id/100/200/150'}" class="h-40 w-full object-cover" loading="lazy" onerror="this.src='https://picsum.photos/200/150'">
                     <div class="p-4 flex flex-col flex-1">
                         <h3 class="font-bold text-lg text-amber-300 line-clamp-2">${escapeHtml(p.name)}</h3>
                         <p class="text-xs text-slate-400 mt-1 line-clamp-2">📦 ${escapeHtml(itemsText)}</p>
@@ -1385,7 +1486,7 @@ function renderProducts() {
                 </div>
             `;
         } else {
-            // ========== SẢN PHẨM CARD - TỐI ==========
+            // ========== SẢN PHẨM CARD ==========
             let topBadge = '';
             let topRank = getTopRank(p.id);
             if (topRank) {
@@ -1404,7 +1505,6 @@ function renderProducts() {
                 </div>`;
             }
             
-            // ========== THUỘC TÍNH ==========
             let attrsHtml = '';
             if(p.attributes && p.attributes.length > 0) {
                 attrsHtml = `<div class="mt-2 space-y-1.5">`;
@@ -1437,7 +1537,7 @@ function renderProducts() {
                 <div class="bg-[#131b2e] rounded-2xl border border-slate-700/50 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 overflow-hidden flex flex-col h-full relative">
                     ${topBadge}
                     <div class="relative overflow-hidden">
-                        <img src="${p.image}" class="h-40 w-full object-cover transition-transform duration-300 hover:scale-105" onerror="this.src='https://picsum.photos/200/150'">
+                        <img src="${p.image}" class="h-40 w-full object-cover transition-transform duration-300 hover:scale-105" loading="lazy" onerror="this.src='https://picsum.photos/200/150'">
                     </div>
                     <div class="p-4 flex flex-col flex-1">
                         <h3 class="font-bold text-sm md:text-base text-slate-100 line-clamp-2 min-h-[2.5rem] leading-snug">${escapeHtml(p.name)}</h3>
@@ -1454,7 +1554,57 @@ function renderProducts() {
             `;
         }
     }
-    document.getElementById('productList').innerHTML = html || '<div class="col-span-full text-center py-16 text-slate-500"><i class="fas fa-box-open text-4xl block mb-3 text-slate-600"></i>Chưa có sản phẩm nào</div>';
+    document.getElementById('productList').innerHTML = html;
+    
+    // Cập nhật phân trang
+    updatePagination(totalPages, page, totalItems);
+}
+
+function updatePagination(totalPages, currentPage, totalItems) {
+    const container = document.getElementById('paginationContainer');
+    const pageNumbers = document.getElementById('pageNumbers');
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    const pageInfo = document.getElementById('pageInfo');
+    
+    if (totalPages <= 1) {
+        container.style.display = 'none';
+        return;
+    }
+    container.style.display = 'flex';
+    
+    // Cập nhật nút Trước/Sau
+    prevBtn.disabled = currentPage <= 1;
+    nextBtn.disabled = currentPage >= totalPages;
+    
+    // Tạo số trang
+    let pagesHtml = '';
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+    
+    if (startPage > 1) {
+        pagesHtml += `<button onclick="goToPage(1)" class="w-8 h-8 rounded-lg text-sm text-slate-400 hover:bg-slate-800/50 transition">1</button>`;
+        if (startPage > 2) pagesHtml += `<span class="text-slate-600">...</span>`;
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const active = i === currentPage ? 'bg-purple-600 text-white' : 'text-slate-400 hover:bg-slate-800/50';
+        pagesHtml += `<button onclick="goToPage(${i})" class="w-8 h-8 rounded-lg text-sm ${active} transition">${i}</button>`;
+    }
+    
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) pagesHtml += `<span class="text-slate-600">...</span>`;
+        pagesHtml += `<button onclick="goToPage(${totalPages})" class="w-8 h-8 rounded-lg text-sm text-slate-400 hover:bg-slate-800/50 transition">${totalPages}</button>`;
+    }
+    
+    pageNumbers.innerHTML = pagesHtml;
+    pageInfo.innerHTML = `Hiển thị ${Math.min(ITEMS_PER_PAGE, totalItems - (currentPage-1)*ITEMS_PER_PAGE)} / ${totalItems} sản phẩm`;
+}
+
+function goToPage(page) {
+    renderPage(page);
+    // Cuộn lên đầu danh sách sản phẩm
+    document.getElementById('productList').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function refreshPage() {
@@ -2381,7 +2531,11 @@ async function submitOrder() {
             document.body.appendChild(toast); setTimeout(() => toast.remove(), 3000); 
         }
 
-        document.getElementById('searchInput').addEventListener('input', () => renderProducts());
+        document.getElementById('searchInput').addEventListener('input', () => {
+            // Reset về trang 1 khi tìm kiếm
+            currentPage = 1;
+            renderProducts();
+        });
         init();
 
         function copySingleItem(elementId, itemName) {
@@ -2410,9 +2564,25 @@ async function submitOrder() {
 
                 // Hàm refresh trang
         function refreshPage() {
-            // Chỉ reload lại dữ liệu từ Firebase, không reload toàn trang
-            loadStoreData();
-            showToast("Đã cập nhật dữ liệu mới nhất!", "success");
+            const storeRef = db.ref('stores/' + storeId);
+            storeRef.once('value', (snapshot) => {
+                const data = snapshot.val();
+                if(data) {
+                    storeData = data;
+                    storeInfo = storeData.storeInfo || {};
+                    if (!storeData.products) storeData.products = [];
+                    if (!storeData.combos) storeData.combos = [];
+                    currentStoreName = storeInfo.storeName || "Cửa hàng";
+                    
+                    document.getElementById('storeTitle').innerHTML = `<i class="fas fa-store"></i> ${currentStoreName}`;
+                    renderProducts(); // Hàm này sẽ reset về trang 1
+                    loadCart();
+                    updateCartDisplay();
+                    showToast("Đã cập nhật dữ liệu mới nhất!", "success");
+                } else {
+                    showToast("Không thể tải dữ liệu!", "error");
+                }
+            });
         }
 
 let pendingCombo = null;

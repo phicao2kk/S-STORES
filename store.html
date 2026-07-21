@@ -1573,14 +1573,13 @@ function updatePagination(totalPages, currentPage, totalItems) {
     }
     container.style.display = 'flex';
     
-    // Cập nhật nút Trước/Sau
     prevBtn.disabled = currentPage <= 1;
     nextBtn.disabled = currentPage >= totalPages;
     
-    // Tạo số trang
+    // ==== HIỂN THỊ 10 TRANG ====
     let pagesHtml = '';
-    let startPage = Math.max(1, currentPage - 2);
-    let endPage = Math.min(totalPages, currentPage + 2);
+    let startPage = Math.max(1, currentPage - 5);
+    let endPage = Math.min(totalPages, currentPage + 4);
     
     if (startPage > 1) {
         pagesHtml += `<button onclick="goToPage(1)" class="w-8 h-8 rounded-lg text-sm text-slate-400 hover:bg-slate-800/50 transition">1</button>`;
@@ -1598,7 +1597,7 @@ function updatePagination(totalPages, currentPage, totalItems) {
     }
     
     pageNumbers.innerHTML = pagesHtml;
-    pageInfo.innerHTML = `Hiển thị ${Math.min(ITEMS_PER_PAGE, totalItems - (currentPage-1)*ITEMS_PER_PAGE)} / ${totalItems} sản phẩm`;
+    pageInfo.innerHTML = `Hiển thị ${Math.min(ITEMS_PER_PAGE, totalItems - (currentPage-1)*ITEMS_PER_PAGE)} / ${totalItems} sản phẩm | Trang ${currentPage}/${totalPages}`;
 }
 
 function goToPage(page) {

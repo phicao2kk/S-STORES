@@ -155,7 +155,6 @@
     </div>
 
     <script>
-        const tabIndicator = document.getElementById('tabIndicator');
 
         // ==================== ẨN/HIỆN MẬT KHẨU ====================
         document.querySelectorAll('.toggle-password').forEach(icon => {
@@ -363,9 +362,9 @@
             }
         }
 
-                // ==================== CHUYỂN TAB ====================
         document.addEventListener('DOMContentLoaded', function() {
-            // Không cần khai báo lại tabIndicator nữa
+            // Khai báo tabIndicator ở đây
+            const tabIndicator = document.getElementById('tabIndicator');
             const btnRegister = document.getElementById('btnRegister');
             const btnLogin = document.getElementById('btnLogin');
             const registerForm = document.getElementById('registerForm');

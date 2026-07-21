@@ -1,5 +1,13 @@
-// sw.js - Service Worker cho S-STORES PWA
-const CACHE_NAME = 's-stores-v2.0.0';
+// ============================================
+// SW.JS - S-STORES PWA
+// Tối ưu cache cho mobile
+// ============================================
+
+const CACHE_NAME = 's-stores-v3.0.0';
+const DATA_CACHE_NAME = 's-stores-data-v1';
+const IMAGE_CACHE_NAME = 's-stores-images-v1';
+
+// ===== 1. STATIC ASSETS =====
 const STATIC_ASSETS = [
     '/',
     '/dashboard.html',
@@ -13,88 +21,140 @@ const STATIC_ASSETS = [
     'https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js'
 ];
 
-// Install event - cache static assets
+// ===== 2. INSTALL =====
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
                 console.log('📦 Caching static assets...');
-                return cache.addAll(STATIC_ASSETS);
+                // Thêm từng file, không fail nếu 1 file lỗi
+                return Promise.allSettled(
+                    STATIC_ASSETS.map(url => 
+                        cache.add(url).catch(() => 
+                            console.warn('⚠️ Failed to cache:', url)
+                        )
+                    )
+                );
             })
             .then(() => self.skipWaiting())
     );
 });
 
-// Activate event - clean old caches
+// ===== 3. ACTIVATE =====
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(keys => {
             return Promise.all(
-                keys.filter(key => key !== CACHE_NAME)
-                    .map(key => {
-                        console.log('🧹 Deleting old cache:', key);
-                        return caches.delete(key);
-                    })
+                keys.filter(key => 
+                    key !== CACHE_NAME && 
+                    key !== DATA_CACHE_NAME &&
+                    key !== IMAGE_CACHE_NAME
+                )
+                .map(key => {
+                    console.log('🧹 Deleting old cache:', key);
+                    return caches.delete(key);
+                })
             );
         })
         .then(() => self.clients.claim())
     );
 });
 
-// Fetch event - serve from cache, fallback to network
+// ===== 4. FETCH - TỐI ƯU =====
 self.addEventListener('fetch', event => {
-    // Skip cross-origin requests
-    if (!event.request.url.startsWith(self.location.origin) && 
-        !event.request.url.includes('cdn.tailwindcss.com') &&
-        !event.request.url.includes('cdnjs.cloudflare.com') &&
-        !event.request.url.includes('gstatic.com')) {
+    const url = event.request.url;
+    
+    // ==== 4a. CACHE ẢNH SẢN PHẨM ====
+    if (url.includes('picsum.photos') || 
+        url.includes('i.ibb.co') || 
+        url.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)) {
+        event.respondWith(
+            caches.open(IMAGE_CACHE_NAME).then(cache => {
+                return cache.match(event.request).then(response => {
+                    if (response) {
+                        console.log('📸 Image from cache:', url.split('/').pop());
+                        return response;
+                    }
+                    return fetch(event.request).then(networkResponse => {
+                        if (networkResponse && networkResponse.status === 200) {
+                            cache.put(event.request, networkResponse.clone());
+                        }
+                        return networkResponse;
+                    }).catch(() => {
+                        // Fallback ảnh mặc định nếu lỗi
+                        return new Response('', { status: 404 });
+                    });
+                });
+            })
+        );
         return;
     }
-
-    event.respondWith(
-        caches.match(event.request)
-            .then(cachedResponse => {
-                if (cachedResponse) {
-                    // Return cached response
-                    return cachedResponse;
-                }
-
-                // If not in cache, fetch from network
-                return fetch(event.request)
-                    .then(response => {
-                        // Don't cache non-successful responses
-                        if (!response || response.status !== 200 || response.type !== 'basic') {
-                            return response;
+    
+    // ==== 4b. CACHE FIREBASE DATA (QUAN TRỌNG NHẤT) ====
+    if (url.includes('firebasedatabase.app')) {
+        event.respondWith(
+            caches.open(DATA_CACHE_NAME).then(cache => {
+                return cache.match(event.request).then(cached => {
+                    if (cached) {
+                        console.log('📦 Firebase data from cache');
+                        // Trả về cache, nhưng vẫn fetch bản mới ngầm
+                        fetch(event.request).then(response => {
+                            if (response && response.status === 200) {
+                                cache.put(event.request, response.clone());
+                            }
+                        }).catch(() => {});
+                        return cached;
+                    }
+                    return fetch(event.request).then(response => {
+                        if (response && response.status === 200) {
+                            console.log('💾 Caching Firebase data');
+                            cache.put(event.request, response.clone());
                         }
-
-                        // Cache the fetched response
-                        const responseClone = response.clone();
-                        caches.open(CACHE_NAME)
-                            .then(cache => {
-                                try {
-                                    cache.put(event.request, responseClone);
-                                } catch (error) {
-                                    console.warn('Cache put error:', error);
-                                }
-                            });
-
                         return response;
-                    })
-                    .catch(() => {
-                        // Offline fallback
-                        if (event.request.mode === 'navigate') {
-                            return caches.match('/dashboard.html');
-                        }
-                        return new Response('Offline - Please check your internet connection', {
-                            status: 503,
-                            statusText: 'Service Unavailable'
-                        });
                     });
+                });
             })
-    );
+        );
+        return;
+    }
+    
+    // ==== 4c. STATIC ASSETS ====
+    if (url.startsWith(self.location.origin) ||
+        url.includes('cdn.tailwindcss.com') ||
+        url.includes('cdnjs.cloudflare.com') ||
+        url.includes('gstatic.com') ||
+        url.includes('fonts.googleapis.com') ||
+        url.includes('fonts.gstatic.com')) {
+        event.respondWith(
+            caches.match(event.request)
+                .then(cachedResponse => {
+                    if (cachedResponse) {
+                        return cachedResponse;
+                    }
+                    return fetch(event.request)
+                        .then(response => {
+                            if (!response || response.status !== 200) {
+                                return response;
+                            }
+                            const clone = response.clone();
+                            caches.open(CACHE_NAME)
+                                .then(cache => cache.put(event.request, clone))
+                                .catch(() => {});
+                            return response;
+                        })
+                        .catch(() => {
+                            if (event.request.mode === 'navigate') {
+                                return caches.match('/dashboard.html');
+                            }
+                            return new Response('Offline', { status: 503 });
+                        });
+                })
+        );
+        return;
+    }
 });
 
-// Handle push notifications (optional)
+// ===== 5. PUSH NOTIFICATIONS =====
 self.addEventListener('push', event => {
     const data = event.data ? event.data.json() : {};
     const title = data.title || 'S-STORES';
@@ -103,35 +163,37 @@ self.addEventListener('push', event => {
         icon: 'https://i.ibb.co/dJxJHqB9/logo-icon-192.png',
         badge: 'https://i.ibb.co/dJxJHqB9/logo-icon-192.png',
         vibrate: [200, 100, 200],
-        data: {
-            url: data.url || '/dashboard.html'
-        }
+        data: { url: data.url || '/dashboard.html' }
     };
-    
+    event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// ===== 6. NOTIFICATION CLICK =====
+self.addEventListener('notificationclick', event => {
+    event.notification.close();
+    const url = event.notification.data?.url || '/dashboard.html';
     event.waitUntil(
-        self.registration.showNotification(title, options)
+        clients.matchAll({ type: 'window' }).then(clients => {
+            for (let client of clients) {
+                if (client.url === url && 'focus' in client) {
+                    return client.focus();
+                }
+            }
+            return clients.openWindow(url);
+        })
     );
 });
 
-// Handle notification click
-self.addEventListener('notificationclick', event => {
-    event.notification.close();
-    
-    const url = event.notification.data?.url || '/dashboard.html';
-    
-    event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true })
-            .then(windowClients => {
-                // Check if there's already a window/tab open
-                for (let client of windowClients) {
-                    if (client.url === url && 'focus' in client) {
-                        return client.focus();
-                    }
-                }
-                // If not, open a new window/tab
-                if (clients.openWindow) {
-                    return clients.openWindow(url);
-                }
+// ===== 7. BACKGROUND SYNC (optional) =====
+// Cho phép sync dữ liệu khi có mạng
+self.addEventListener('sync', event => {
+    if (event.tag === 'sync-data') {
+        event.waitUntil(
+            // Đồng bộ dữ liệu khi có mạng
+            caches.open(DATA_CACHE_NAME).then(cache => {
+                // Logic sync ở đây
+                console.log('🔄 Syncing data...');
             })
-    );
+        );
+    }
 });

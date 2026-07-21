@@ -1,6 +1,19 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+    <!-- Thêm sau meta tags -->
+<link rel="preconnect" href="https://cdn.tailwindcss.com">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+<link rel="preconnect" href="https://www.gstatic.com">
+<!-- ===== FONT GOOGLE ===== -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="dns-prefetch" href="https://fir-s-stores-2007-default-rtdb.asia-southeast1.firebasedatabase.app">
+
     <!-- Firebase App (the core Firebase SDK) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <!-- Firebase Realtime Database -->
@@ -24,17 +37,17 @@
             firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.database();
+        // BẬT OFFLINE PERSISTENCE - Giúp load nhanh hơn
+        db.setPersistence(firebase.database.Persistence.LOCAL)
+            .then(() => console.log('✅ Firebase offline mode enabled'))
+            .catch(err => console.warn('⚠️ Offline mode not supported:', err));
         const storage = firebase.storage();
     </script>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Cửa hàng - S-STORES</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-
         * {
             font-family: 'Outfit', 'Inter', sans-serif;
         }

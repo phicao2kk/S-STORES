@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Preconnect cho các CDN -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://www.gstatic.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="dns-prefetch" href="https://fir-s-stores-2007-default-rtdb.asia-southeast1.firebasedatabase.app">
+
     <!-- ===== PWA MANIFEST ===== -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0b0f19">
@@ -40,11 +52,13 @@
             firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.database();
+        // BẬT OFFLINE PERSISTENCE - Giúp load nhanh hơn
+        db.setPersistence(firebase.database.Persistence.LOCAL)
+            .then(() => console.log('✅ Firebase offline mode enabled'))
+            .catch(err => console.warn('⚠️ Offline mode not supported:', err));
         const storage = firebase.storage();
     </script>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - S-STORES</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -61,8 +75,6 @@
         #pwaInstallBanner {
             z-index: 9999;
         }
-
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
         * {
             font-family: 'Outfit', 'Inter', sans-serif;
@@ -1785,57 +1797,87 @@
     }
 
     function loadStoreData() {
-        const storeRef = db.ref('stores/' + storeId);
-        
-        storeRef.on('value', (snapshot) => {
-            const data = snapshot.val();
-            
-            if (!data) {
-                storeData = { 
-                    products: [], 
-                    combos: [], 
-                    orders: [], 
-                    importHistory: [], 
-                    storeInfo: {} 
-                };
-                storeRef.set(storeData);
-            } else {
-                storeData = data;
+    // ===== 1. THỬ LOAD TỪ CACHE =====
+    const cached = localStorage.getItem(`store_data_${storeId}`);
+    if (cached) {
+        try {
+            const cachedData = JSON.parse(cached);
+            const cacheTime = localStorage.getItem(`store_data_time_${storeId}`);
+            if (cacheTime && (Date.now() - parseInt(cacheTime)) < 5 * 60 * 1000) {
+                console.log("📦 Dùng dữ liệu từ cache");
+                storeData = cachedData;
+                if (!storeData.products) storeData.products = [];
+                if (!storeData.combos) storeData.combos = [];
+                if (!storeData.orders) storeData.orders = [];
+                if (!storeData.importHistory) storeData.importHistory = [];
+                if (!storeData.storeInfo) storeData.storeInfo = {};
+                
+                initDashboardChat();
+                loadStoreInfo();
+                calculateSoldStats();
+                renderProducts();
+                renderCombos();
+                renderOrders();
+                renderComboSelector();
+                renderImportSelect();
+                renderImportHistory();
+                renderStockSummary();
+                updateChart();
+                updateInventoryNotification();
+                return;
             }
-            
-            if (!storeData.products) storeData.products = [];
-            if (!storeData.combos) storeData.combos = [];
-            if (!storeData.orders) storeData.orders = [];
-            if (!storeData.importHistory) storeData.importHistory = [];
-            if (!storeData.storeInfo) storeData.storeInfo = {};
-            
-            storeData.products.forEach(p => {
-                if(p.showRetail === undefined) p.showRetail = true;
-                if(p.showCombo === undefined) p.showCombo = true;
-                if(p.soldCount === undefined) p.soldCount = 0;
-                if(p.totalImported === undefined) p.totalImported = p.stock || 0;
-            });
-            
-            initDashboardChat();
-            loadStoreInfo();
-            
-            calculateSoldStats();
-            renderProducts();
-            renderCombos();
-            renderOrders();
-            renderComboSelector();
-            renderImportSelect();
-            renderImportHistory();
-            renderStockSummary();
-            updateChart();
-            updateInventoryNotification();
-            
-            console.log("Đã tải dữ liệu từ Firebase!");
-        }, (error) => {
-            console.error("Lỗi kết nối Firebase:", error);
-            showToast("Không thể kết nối đến máy chủ!", "error");
-        });
+        } catch(e) { console.log("Cache lỗi, tải từ Firebase"); }
     }
+    
+    // ===== 2. TỪ FIREBASE =====
+    const storeRef = db.ref('stores/' + storeId);
+    storeRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) {
+            storeData = { products: [], combos: [], orders: [], importHistory: [], storeInfo: {} };
+            storeRef.set(storeData);
+        } else {
+            storeData = data;
+        }
+        
+        if (!storeData.products) storeData.products = [];
+        if (!storeData.combos) storeData.combos = [];
+        if (!storeData.orders) storeData.orders = [];
+        if (!storeData.importHistory) storeData.importHistory = [];
+        if (!storeData.storeInfo) storeData.storeInfo = {};
+        
+        storeData.products.forEach(p => {
+            if(p.showRetail === undefined) p.showRetail = true;
+            if(p.showCombo === undefined) p.showCombo = true;
+            if(p.soldCount === undefined) p.soldCount = 0;
+            if(p.totalImported === undefined) p.totalImported = p.stock || 0;
+        });
+        
+        // ===== LƯU CACHE =====
+        try {
+            localStorage.setItem(`store_data_${storeId}`, JSON.stringify(storeData));
+            localStorage.setItem(`store_data_time_${storeId}`, Date.now().toString());
+        } catch(e) {}
+        
+        initDashboardChat();
+        loadStoreInfo();
+        calculateSoldStats();
+        renderProducts();
+        renderCombos();
+        renderOrders();
+        renderComboSelector();
+        renderImportSelect();
+        renderImportHistory();
+        renderStockSummary();
+        updateChart();
+        updateInventoryNotification();
+        
+        console.log("Đã tải dữ liệu từ Firebase!");
+    }, (error) => {
+        console.error("Lỗi kết nối Firebase:", error);
+        showToast("Không thể kết nối đến máy chủ!", "error");
+    });
+}
 
     function loadStoreInfo() {
         if(!storeData) {
@@ -2443,83 +2485,87 @@ function renderChart(productsData, combosData, type = 'product', limit = 5) {
     }
 
     function renderProducts() {
-        let html = '';
-        let normalProducts = storeData.products.filter(p => !p.isComboOnly);
-        let productCount = normalProducts.length;
-        const countEl = document.getElementById('productCount');
-        if (countEl) countEl.innerText = productCount + ' sản phẩm';
+    // Ẩn skeleton nếu có
+    const skeleton = document.getElementById('skeletonRows');
+    if (skeleton) skeleton.style.display = 'none';
+    
+    let html = '';
+    let normalProducts = storeData.products.filter(p => !p.isComboOnly);
+    let productCount = normalProducts.length;
+    const countEl = document.getElementById('productCount');
+    if (countEl) countEl.innerText = productCount + ' sản phẩm';
+    
+    normalProducts.forEach(p => { 
+        let profit = p.salePrice - p.importPrice;
+        let sold = p.soldCount || 0;
+        let needImport = calculateNeedToImport(p);
+        let statusClass = p.stock <= 0 ? 'badge-danger' : (p.stock <= 5 ? 'badge-warning' : 'badge-success');
+        let needClass = needImport > 0 ? 'badge-danger' : 'badge-info';
+        let rowClass = p.stock <= 0 ? 'stock-zero' : '';
         
-        normalProducts.forEach(p => { 
-            let profit = p.salePrice - p.importPrice;
-            let sold = p.soldCount || 0;
-            let needImport = calculateNeedToImport(p);
-            let statusClass = p.stock <= 0 ? 'badge-danger' : (p.stock <= 5 ? 'badge-warning' : 'badge-success');
-            let needClass = needImport > 0 ? 'badge-danger' : 'badge-info';
-            let rowClass = p.stock <= 0 ? 'stock-zero' : '';
-            
-            let attrsHtml = '';
-            if(p.attributes && p.attributes.length > 0) {
-                attrsHtml = `<div class="flex flex-col gap-1">`;
-                p.attributes.forEach(attr => {
-                    attrsHtml += `
-                        <div class="text-xs">
-                            <span class="font-semibold text-gray-400">${escapeHtml(attr.name)}:</span>
-                            <div class="flex flex-wrap gap-1 mt-0.5">
-                                ${attr.options.map(opt => `<span class="inline-block bg-purple-500/10 text-purple-300 px-2 py-0.5 rounded-full text-xs border border-purple-500/20">${escapeHtml(opt)}</span>`).join('')}
-                            </div>
+        let attrsHtml = '';
+        if(p.attributes && p.attributes.length > 0) {
+            attrsHtml = `<div class="flex flex-col gap-1">`;
+            p.attributes.forEach(attr => {
+                attrsHtml += `
+                    <div class="text-xs">
+                        <span class="font-semibold text-gray-400">${escapeHtml(attr.name)}:</span>
+                        <div class="flex flex-wrap gap-1 mt-0.5">
+                            ${attr.options.map(opt => `<span class="inline-block bg-purple-500/10 text-purple-300 px-2 py-0.5 rounded-full text-xs border border-purple-500/20">${escapeHtml(opt)}</span>`).join('')}
                         </div>
-                    `;
-                });
-                attrsHtml += `</div>`;
-            } else {
-                attrsHtml = '<span class="text-slate-500 text-xs italic">Không có</span>';
-            }
-            
-            html += `<tr class="${rowClass} hover:bg-slate-800/30 transition">
-                        <td class="py-2 px-2 text-center">
-                            <img src="${p.image}" class="w-10 h-10 rounded-lg object-cover border border-slate-700/50" onerror="this.src='https://picsum.photos/100/100'">
-                        </td>
-                        <td class="py-2 px-2 font-medium">
-                            ${escapeHtml(p.name)}
-                            ${p.stock <= 0 ? '<span class="badge-danger ml-2 text-xs">HẾT</span>' : ''}
-                        </td>
-                        <td class="py-2 px-2">
-                            <div class="flex flex-col gap-1">
-                                <label class="inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" class="show-retail w-3.5 h-3.5" data-id="${p.id}" ${p.showRetail !== false ? 'checked' : ''} onchange="updateProductType(${p.id}, 'retail', this.checked)">
-                                    <span class="ml-1 text-xs text-green-400"><i class="fas fa-store"></i> Bán lẻ</span>
-                                </label>
-                                <label class="inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" class="show-combo w-3.5 h-3.5" data-id="${p.id}" ${p.showCombo !== false ? 'checked' : ''} onchange="updateProductType(${p.id}, 'combo', this.checked)">
-                                    <span class="ml-1 text-xs text-amber-400"><i class="fas fa-layer-group"></i> Dùng combo</span>
-                                </label>
-                            </div>
-                        </td>
-                        <td class="py-2 px-2 text-right text-slate-400">${p.importPrice.toLocaleString()}đ</td>
-                        <td class="py-2 px-2 text-right text-purple-400 font-semibold">${p.salePrice.toLocaleString()}đ</td>
-                        <td class="py-2 px-2 text-right ${profit >= 0 ? 'text-emerald-400' : 'text-red-400'} font-medium">${profit.toLocaleString()}đ</td>
-                        <td class="py-2 px-2 text-center"><span class="${statusClass} px-2 py-1 text-xs">${p.stock}</span></td>
-                        <td class="py-2 px-2 text-center text-slate-400">${(p.totalImported || p.stock).toLocaleString()}</td>
-                        <td class="py-2 px-2 text-center text-amber-400 font-medium">${sold.toLocaleString()}</td>
-                        <td class="py-2 px-2 text-center"><span class="${needClass} px-2 py-1 text-xs">${needImport > 0 ? needImport.toLocaleString() : 'Đủ'}</span></td>
-                        <td class="py-2 px-2 max-w-[180px]">${attrsHtml}</td>
-                        <td class="py-2 px-2 text-center">
-                            <div class="flex gap-1 justify-center">
-                                <button onclick="startEditProduct(${p.id})" class="text-blue-400 hover:text-blue-300 p-1 text-sm" title="Sửa">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button onclick="deleteProduct(${p.id})" class="text-red-400 hover:text-red-300 p-1 text-sm" title="Xóa">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>`;
-        });
-        const listEl = document.getElementById('productList');
-        if (listEl) {
-            listEl.innerHTML = html || '<tr><td colspan="12" class="text-center py-8 text-slate-400">Chưa có sản phẩm nào</td></tr>';
+                    </div>
+                `;
+            });
+            attrsHtml += `</div>`;
+        } else {
+            attrsHtml = '<span class="text-slate-500 text-xs italic">Không có</span>';
         }
+        
+        html += `<tr class="${rowClass} hover:bg-slate-800/30 transition">
+                    <td class="py-2 px-2 text-center">
+                        <img src="${p.image}" loading="lazy" class="w-10 h-10 rounded-lg object-cover border border-slate-700/50" onerror="this.src='https://picsum.photos/100/100'">
+                    </td>
+                    <td class="py-2 px-2 font-medium">
+                        ${escapeHtml(p.name)}
+                        ${p.stock <= 0 ? '<span class="badge-danger ml-2 text-xs">HẾT</span>' : ''}
+                    </td>
+                    <td class="py-2 px-2">
+                        <div class="flex flex-col gap-1">
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="show-retail w-3.5 h-3.5" data-id="${p.id}" ${p.showRetail !== false ? 'checked' : ''} onchange="updateProductType(${p.id}, 'retail', this.checked)">
+                                <span class="ml-1 text-xs text-green-400"><i class="fas fa-store"></i> Bán lẻ</span>
+                            </label>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="show-combo w-3.5 h-3.5" data-id="${p.id}" ${p.showCombo !== false ? 'checked' : ''} onchange="updateProductType(${p.id}, 'combo', this.checked)">
+                                <span class="ml-1 text-xs text-amber-400"><i class="fas fa-layer-group"></i> Dùng combo</span>
+                            </label>
+                        </div>
+                    </td>
+                    <td class="py-2 px-2 text-right text-slate-400">${p.importPrice.toLocaleString()}đ</td>
+                    <td class="py-2 px-2 text-right text-purple-400 font-semibold">${p.salePrice.toLocaleString()}đ</td>
+                    <td class="py-2 px-2 text-right ${profit >= 0 ? 'text-emerald-400' : 'text-red-400'} font-medium">${profit.toLocaleString()}đ</td>
+                    <td class="py-2 px-2 text-center"><span class="${statusClass} px-2 py-1 text-xs">${p.stock}</span></td>
+                    <td class="py-2 px-2 text-center text-slate-400">${(p.totalImported || p.stock).toLocaleString()}</td>
+                    <td class="py-2 px-2 text-center text-amber-400 font-medium">${sold.toLocaleString()}</td>
+                    <td class="py-2 px-2 text-center"><span class="${needClass} px-2 py-1 text-xs">${needImport > 0 ? needImport.toLocaleString() : 'Đủ'}</span></td>
+                    <td class="py-2 px-2 max-w-[180px]">${attrsHtml}</td>
+                    <td class="py-2 px-2 text-center">
+                        <div class="flex gap-1 justify-center">
+                            <button onclick="startEditProduct(${p.id})" class="text-blue-400 hover:text-blue-300 p-1 text-sm" title="Sửa">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteProduct(${p.id})" class="text-red-400 hover:text-red-300 p-1 text-sm" title="Xóa">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+    });
+    const listEl = document.getElementById('productList');
+    if (listEl) {
+        listEl.innerHTML = html || '<tr><td colspan="12" class="text-center py-8 text-slate-400">Chưa có sản phẩm nào</td></tr>';
     }
+}
 
     function refreshComboSelector() {
         renderComboSelector();

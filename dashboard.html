@@ -720,7 +720,7 @@
                             </button>
                             <p class="text-xs text-slate-500 mt-2">Ví dụ: Màu sắc: Đỏ, Xanh, Vàng | Size: S, M, L, XL</p>
                         </div>
-                        <input type="number" id="prodStock" placeholder="Số lượng sản phẩm có trong kho" class="input-dark" value="">
+                        <input type="number" id="prodStock" placeholder="Tồn kho" class="input-dark" value="">
                         <button id="submitProductBtn" onclick="submitProduct()" class="btn-primary w-full py-3 flex items-center justify-center gap-2">
                             <i class="fas fa-plus"></i> Thêm sản phẩm
                         </button>
@@ -746,7 +746,7 @@
                                     <th class="text-right min-w-[70px]">Giá nhập</th>
                                     <th class="text-right min-w-[70px]">Giá bán</th>
                                     <th class="text-right min-w-[60px]">Lời</th>
-                                    <th class="text-center min-w-[50px]">Kho</th>
+                                    <th class="text-center min-w-[50px]">Tồn</th>
                                     <th class="text-center min-w-[60px]">Đã nhập</th>
                                     <th class="text-center min-w-[60px]">Đã bán</th>
                                     <th class="text-center min-w-[70px]">Cần nhập</th>
@@ -2688,7 +2688,7 @@ function renderChart(productsData, combosData, type = 'product', limit = 5) {
                                 <th class="text-left py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">📦 Sản phẩm</th>
                                 <th class="text-left py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">🏷️ Thuộc tính</th>
                                 <th class="text-left py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">🎯 Giá trị</th>
-                                <th class="text-center py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">📦 </th>
+                                <th class="text-center py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">📦 Tồn</th>
                                 <th class="text-center py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">🛒 Đã bán</th>
                                 <th class="text-center py-2 px-3 text-xs font-semibold text-red-400 uppercase tracking-wider whitespace-nowrap">⚠️ Cần nhập</th>
                                 <th class="text-center py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">Thao tác</th>
@@ -2866,7 +2866,7 @@ function renderChart(productsData, combosData, type = 'product', limit = 5) {
             let need = calculateNeedToImport(p);
             let needText = need > 0 ? ` 🔴 Cần nhập ${need}` : ' 🟢 Đủ hàng';
             let stockText = p.stock === 0 ? ' (HẾT HÀNG)' : '';
-            select.innerHTML += `<option value="${p.id}" data-flavor="${p.flavor || ''}" data-need="${need}">${p.name}${stockText} - Kho: ${p.stock} | Đã bán: ${p.soldCount || 0}${needText}</option>`;
+            select.innerHTML += `<option value="${p.id}" data-flavor="${p.flavor || ''}" data-need="${need}">${p.name}${stockText} - Tồn: ${p.stock} | Đã bán: ${p.soldCount || 0}${needText}</option>`;
         });
         
         select.onchange = function() {

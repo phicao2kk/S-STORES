@@ -665,29 +665,24 @@
     background: #1f2937;
     border-radius: 4px;
 }
-/* Đảm bảo icon hiển thị trên mobile */
+/* Fix header buttons trên mobile */
 @media (max-width: 640px) {
-    .btn-secondary i,
-    .bg-slate-800\/50 i {
-        font-size: 1rem !important;
-        display: inline-block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
+    .flex-wrap .btn-secondary,
+    .flex-wrap .bg-slate-800\/50 {
+        font-size: 0.65rem !important;
+        padding: 0.25rem 0.5rem !important;
+        white-space: nowrap !important;
     }
-    .btn-secondary,
-    .bg-slate-800\/50 {
-        min-width: 32px !important;
-        min-height: 32px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+    .flex-wrap .btn-secondary i,
+    .flex-wrap .bg-slate-800\/50 i {
+        font-size: 0.8rem !important;
     }
     #cartCount {
-        font-size: 0.6rem !important;
-        min-width: 16px !important;
-        height: 16px !important;
-        padding: 0 3px !important;
-        line-height: 16px !important;
+        font-size: 0.55rem !important;
+        min-width: 14px !important;
+        height: 14px !important;
+        padding: 0 2px !important;
+        line-height: 14px !important;
     }
 }
     </style>
@@ -719,24 +714,19 @@
                     <p id="storeSlogan" class="text-xs text-slate-500 hidden sm:block">Mua sắm dễ dàng</p>
                 </div>
             </div>
-            <div class="flex items-center gap-1 md:gap-2 flex-wrap sm:flex-nowrap">
-                <!-- Nút Cập nhật -->
-                <button onclick="refreshPage()" class="btn-secondary flex items-center justify-center gap-1 md:gap-2 text-[10px] md:text-sm py-1 px-2 md:py-2 md:px-3">
-                    <i class="fas fa-sync-alt text-blue-400 text-xs md:text-sm"></i>
-                    <span class="text-[10px] md:text-sm">Cập nhật</span>
+            <div class="flex flex-wrap items-center gap-1 md:gap-2">
+                <button onclick="refreshPage()" class="btn-secondary flex items-center gap-1 text-xs md:text-sm py-1.5 px-2 md:py-2 md:px-3">
+                    <i class="fas fa-sync-alt text-blue-400"></i>
+                    <span class="text-xs md:text-sm">Cập nhật</span>
                 </button>
-                
-                <!-- Nút Giỏ hàng -->
-                <button onclick="toggleCart()" class="relative bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 px-2 md:px-4 py-1 md:py-2 rounded-xl font-semibold text-[10px] md:text-sm transition border border-slate-700/50 flex items-center justify-center gap-1">
-                    <i class="fas fa-shopping-cart text-purple-400 text-xs md:text-sm"></i>
-                    <span class="text-[10px] md:text-sm">Giỏ hàng</span>
-                    <span id="cartCount" class="bg-red-500 text-white text-[9px] md:text-xs rounded-full px-1 min-w-[16px] h-4 flex items-center justify-center">0</span>
+                <button onclick="toggleCart()" class="relative bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 px-2 md:px-4 py-1.5 md:py-2 rounded-xl font-semibold text-xs md:text-sm transition border border-slate-700/50 flex items-center gap-1">
+                    <i class="fas fa-shopping-cart text-purple-400"></i>
+                    <span class="text-xs md:text-sm">Giỏ hàng</span>
+                    <span id="cartCount" class="bg-red-500 text-white text-[10px] md:text-xs rounded-full px-1.5 min-w-[18px] h-4 md:h-5 flex items-center justify-center">0</span>
                 </button>
-                
-                <!-- Nút Lịch sử -->
-                <button onclick="toggleOrderHistory()" class="bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 px-2 md:px-4 py-1 md:py-2 rounded-xl font-semibold text-[10px] md:text-sm transition border border-slate-700/50 flex items-center justify-center gap-1">
-                    <i class="fas fa-history text-purple-400 text-xs md:text-sm"></i>
-                    <span class="text-[10px] md:text-sm">Lịch sử</span>
+                <button onclick="toggleOrderHistory()" class="bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 px-2 md:px-4 py-1.5 md:py-2 rounded-xl font-semibold text-xs md:text-sm transition border border-slate-700/50 flex items-center gap-1">
+                    <i class="fas fa-history text-purple-400"></i>
+                    <span class="text-xs md:text-sm">Lịch sử</span>
                 </button>
             </div>
         </div>

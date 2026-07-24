@@ -4183,9 +4183,9 @@ function renderChart(productsData, combosData, type = 'product', limit = 5) {
             let btn = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`);
             if(btn) {
                 if (t === tab) {
-                    btn.className = 'tab-active px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2';
+                    btn.className = 'tab-active px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 relative';
                 } else {
-                    btn.className = 'tab-inactive px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2';
+                    btn.className = 'tab-inactive px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 relative';
                 }
             }
         });

@@ -1303,13 +1303,13 @@ a, button, .clickable {
     </div>
 </div>
 
-    <!-- PAGINATION -->
+<!-- PAGINATION -->
 <div id="paginationContainer" class="flex justify-center items-center gap-2 mt-6 flex-wrap">
-    <button id="prevPage" class="bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 px-4 py-2 rounded-xl text-sm transition border border-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+    <button id="prevPage" onclick="goToPage(currentPage - 1)" class="bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 px-4 py-2 rounded-xl text-sm transition border border-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed">
         <i class="fas fa-chevron-left"></i> Trước
     </button>
     <div id="pageNumbers" class="flex gap-1"></div>
-    <button id="nextPage" class="bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 px-4 py-2 rounded-xl text-sm transition border border-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed">
+    <button id="nextPage" onclick="goToPage(currentPage + 1)" class="bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 px-4 py-2 rounded-xl text-sm transition border border-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed">
         Sau <i class="fas fa-chevron-right"></i>
     </button>
 </div>
@@ -2141,6 +2141,20 @@ function updatePagination(totalPages, currentPage, totalItems) {
     prevBtn.disabled = currentPage <= 1;
     nextBtn.disabled = currentPage >= totalPages;
     
+    // ✅ THÊM DÒNG NÀY - GÁN LẠI SỰ KIỆN CLICK
+    prevBtn.onclick = function() {
+        if (currentPage > 1) {
+            renderPage(currentPage - 1);
+        }
+    };
+    
+    // ✅ THÊM DÒNG NÀY - GÁN LẠI SỰ KIỆN CLICK
+    nextBtn.onclick = function() {
+        if (currentPage < totalPages) {
+            renderPage(currentPage + 1);
+        }
+    };
+    
     // ==== HIỂN THỊ 10 TRANG ====
     let pagesHtml = '';
     let startPage = Math.max(1, currentPage - 5);
@@ -2168,7 +2182,10 @@ function updatePagination(totalPages, currentPage, totalItems) {
 function goToPage(page) {
     renderPage(page);
     // Cuộn lên đầu danh sách sản phẩm
-    document.getElementById('productList').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const productList = document.getElementById('productList');
+    if (productList) {
+        productList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 function refreshPage() {
